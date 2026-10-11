@@ -1,0 +1,15 @@
+# Dummy Workflow
+name: CI Verification
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Test GitHub Actions
+        run: echo "Actions OK"
