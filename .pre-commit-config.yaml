@@ -1,0 +1,22 @@
+default_language_version:
+  python: python3.13
+
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.14.0
+    hooks:
+      - id: ruff-check
+      - id: ruff-format
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+  - repo: local
+    hooks:
+      - id: unit-tests
+        name: Unit tests and coverage (minimum 91%)
+        entry: python -m pytest tests/unit
+        language: system
+        pass_filenames: false
+        always_run: true
