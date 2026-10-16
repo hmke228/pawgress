@@ -38,6 +38,32 @@ python -m pawgress --help
 Both entry points also print help when called without arguments. There are no
 application commands yet.
 
+## Project layout and architecture
+
+```text
+src/pawgress/
+    __init__.py              Python package
+    __main__.py              python -m pawgress entry point
+    cli.py                   CLI entry point and help
+    ai.py                    AI Report Generation placeholder
+    rag.py                   RAG placeholder
+    behavioral_comparison.py Behavioral Comparison placeholder
+    storage.py               SQLite storage placeholder
+tests/unit/                  Direct unit tests and component import tests
+tests/integration/           CLI subprocess smoke tests
+scripts/lint.sh              Ruff lint and format checks
+```
+
+The Project Plan's four main components are CLI, AI Report Generation, RAG, and
+Behavioral Comparison. Storage is a supporting module: the team has selected
+**SQLite**, using Python's built-in `sqlite3` module when persistence is
+implemented. No separate database service or SQLite package is needed. Database
+schemas, queries, and component interfaces remain future work.
+
+The AI provider and retrieval implementation remain undecided. Keep the initial
+setup lightweight and follow the existing Project Plan; changes to requirements
+or architecture need team approval.
+
 ## Development checks
 
 With the virtual environment active, run:
@@ -83,3 +109,19 @@ runs lint/format checks, unit tests with the coverage gate, and integration test
 - [Issue #5](https://github.com/hmke228/pawgress/issues/5): use the existing Project
   Plan. This setup does not replace the plan or establish that team approval and
   MVP backlog acceptance criteria are complete.
+
+## Team workflow
+
+- Work on separate `chore/`, `feat/`, or `fix/` branches; never commit directly to
+  `main`. Merge through pull requests with at least one approval and CODEOWNERS review.
+- Each PR must have fewer than 100 changed lines, counting additions and deletions.
+  Keep PRs focused; an issue may have multiple PRs. Use `Refs #2`, `Refs #3`, or
+  `Refs #4`; close issues only after all acceptance criteria are met. Keep #5 open
+  for the team's requirements and MVP backlog decisions.
+- Add tests with code changes. Unit line coverage must exceed 90% (91% gate).
+  Cover public entry points with integration tests; include validation in PRs.
+- Use descriptive snake_case names, typed function signatures, and Ruff formatting
+  and import ordering. Never commit secrets, virtual environments, or runtime data.
+- AI-generated work must be reviewed, understood, and tested; document or cite it
+  when required by course policy. Agents follow `AGENTS.md` and need approval to
+  commit, push, or publish PRs.
