@@ -1,0 +1,34 @@
+
+[
+    {
+      "id": "sample_001",
+      "topic": "stress_signals",
+      "text": "A tucked tail and lowered body posture can be associated with fear, discomfort, or uncertainty. These signs should be considered together with the surrounding situation.",
+      "source": "Original demonstration text"
+    },
+    {
+      "id": "sample_002",
+      "topic": "ear_position",
+      "text": "A dog holding its ears backward may be displaying uncertainty or discomfort. Ear position should be interpreted with other body language signals.",
+      "source": "Original demonstration text"
+    },
+    {
+      "id": "sample_003",
+      "topic": "play_behavior",
+      "text": "Dogs may demonstrate playful behavior through loose movements, play bows, and changes in body posture. Observing the entire interaction is important.",
+      "source": "Original demonstration text"
+    },
+    {
+      "id": "sample_004",
+      "topic": "body_tension",
+      "text": "Stiff posture and sudden stillness may indicate heightened attention or tension. These signals alone do not establish aggressive intent.",
+      "source": "Original demonstration text"
+    },
+    {
+      "id": "sample_005",
+      "topic": "recommendations",
+      "text": "When a dog appears uncomfortable, increasing distance from a possible stressor and avoiding forced interactions may help. Professional guidance may be appropriate for ongoing behavioral concerns.",
+      "source": "Original demonstration text"
+    }
+  ]
+  
