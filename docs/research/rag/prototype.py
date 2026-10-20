@@ -1,10 +1,8 @@
-
 import json
 from pathlib import Path
 
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
-
 
 # Find the sample knowledge base in the same folder.
 DATA_FILE = Path(__file__).with_name("sample_knowledge.json")
@@ -30,9 +28,7 @@ def retrieve_knowledge(query, documents, top_k=3):
     query_vector = vectorizer.transform([query])
 
     # Compare the query with every knowledge base entry.
-    scores = cosine_similarity(
-        query_vector, document_vectors
-    ).flatten()
+    scores = cosine_similarity(query_vector, document_vectors).flatten()
 
     # Sort the results from highest similarity to lowest.
     ranked_indices = scores.argsort()[::-1]
@@ -48,13 +44,15 @@ def retrieve_knowledge(query, documents, top_k=3):
 
         document = documents[index]
 
-        results.append({
-            "id": document["id"],
-            "topic": document["topic"],
-            "text": document["text"],
-            "source": document["source"],
-            "score": round(score, 3),
-        })
+        results.append(
+            {
+                "id": document["id"],
+                "topic": document["topic"],
+                "text": document["text"],
+                "source": document["source"],
+                "score": round(score, 3),
+            }
+        )
 
         if len(results) >= top_k:
             break
