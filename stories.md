@@ -33,7 +33,7 @@ Existing Epic: [#16](https://github.com/hmke228/pawgress/issues/16).
 ## Epic 2 — Implement Pawgress Dog Behavior MVP
 
 **Make Pawgress work.** Extend the working Epic 1 pipeline to one dog's behavior
-analysis. Reference the preliminary [schema design](docs/research/ai_report_schema.md)
+analysis. Reference the preliminary [schema design](docs/research/ai/ai_report_schema.md)
 when this Epic is discussed; do not modify or implement it merely to draft Stories.
 Schema, scene matching, storage details, and interfaces still need team review.
 Populate the professional knowledge base before generating the first dog report.
