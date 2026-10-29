@@ -12,7 +12,7 @@ and persistence are not implemented.
 ## Development setup
 
 Prerequisites: Python 3.13, Git, and a POSIX shell (macOS, Linux, or WSL) for the
-commands below. No API keys or database setup are needed.
+commands below. Offline tests need no API keys or database setup.
 
 ```sh
 git clone https://github.com/hmke228/pawgress.git
@@ -60,9 +60,9 @@ Behavioral Comparison. Storage is a supporting module: the team has selected
 implemented. No separate database service or SQLite package is needed. Database
 schemas, queries, and component interfaces remain future work.
 
-The AI provider and retrieval implementation remain undecided. Keep the initial
-setup lightweight and follow the existing Project Plan; changes to requirements
-or architecture need team approval.
+Epic 1 AI generation uses OpenAI behind the provider-independent `AIGenerator`
+interface. Keep the setup lightweight and follow the existing Project Plan;
+changes to requirements or architecture need team approval.
 
 ## Development checks
 
