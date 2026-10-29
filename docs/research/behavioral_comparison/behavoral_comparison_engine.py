@@ -8,47 +8,14 @@ from uuid import uuid4
 DB_NAME = Path(__file__).with_name("pawgress.db")
 
 OBSERVATION_PATTERNS = {
-                        "approaching another dog": [
-                            "approached",
-                            "approaching",
-                            "approach"
-                        ],
-
-                        "barking": [
-                            "barked",
-                            "barking",
-                            "bark"
-                        ],
-
-                        "jumping": [
-                            "jumped",
-                            "jumping",
-                            "jump"
-                        ],
-
-                        "tail wagging": [
-                            "tail wagging",
-                            "wagging tail"
-                        ],
-
-                        "growling": [
-                            "growling",
-                            "growl"
-                        ],
-
-                        "relaxed posture": [
-                            "relaxed",
-                            "calm",
-                            "calmly"
-                        ],
-
-                        "social interaction": [
-                            "social",
-                            "greeted",
-                            "greeting",
-                            "interacted"
-                        ]
-                    }
+    "approaching another dog": ["approached", "approaching", "approach"],
+    "barking": ["barked", "barking", "bark"],
+    "jumping": ["jumped", "jumping", "jump"],
+    "tail wagging": ["tail wagging", "wagging tail"],
+    "growling": ["growling", "growl"],
+    "relaxed posture": ["relaxed", "calm", "calmly"],
+    "social interaction": ["social", "greeted", "greeting", "interacted"],
+}
 
 
 def initialize_database():
@@ -152,9 +119,7 @@ def extract_observations(text):
 
     for theme, patterns in OBSERVATION_PATTERNS.items():
         for pattern in patterns:
-
             if pattern in text:
-
                 if is_negated(text, pattern):
                     continue
 
@@ -172,10 +137,9 @@ def compare_reports(current_observations, previous_reports):
 
     if not previous_reports:
         return {
-            "comparison_summary":
-                "No previous reports were available for comparison. "
-                "This report establishes a behavioral baseline.",
-            "referenced_report_ids": []
+            "comparison_summary": "No previous reports were available for comparison. "
+            "This report establishes a behavioral baseline.",
+            "referenced_report_ids": [],
         }
 
     current_themes = set(extract_observations(current_observations))
@@ -186,13 +150,9 @@ def compare_reports(current_observations, previous_reports):
     for report in previous_reports:
         referenced_ids.append(report["report_id"])
 
-        previous_text = (
-            report["behavioral_observations"]["current"]
-        )
+        previous_text = report["behavioral_observations"]["current"]
 
-        historical_themes.update(
-            extract_observations(previous_text)
-        )
+        historical_themes.update(extract_observations(previous_text))
 
     consistent = current_themes & historical_themes
     new = current_themes - historical_themes
@@ -202,16 +162,12 @@ def compare_reports(current_observations, previous_reports):
 
     if consistent:
         summary_parts.append(
-            "Consistent observations include "
-            + ", ".join(sorted(consistent))
-            + "."
+            "Consistent observations include " + ", ".join(sorted(consistent)) + "."
         )
 
     if new:
         summary_parts.append(
-            "Newly observed behaviors include "
-            + ", ".join(sorted(new))
-            + "."
+            "Newly observed behaviors include " + ", ".join(sorted(new)) + "."
         )
 
     if no_longer_observed:
@@ -228,7 +184,7 @@ def compare_reports(current_observations, previous_reports):
 
     return {
         "comparison_summary": " ".join(summary_parts),
-        "referenced_report_ids": referenced_ids
+        "referenced_report_ids": referenced_ids,
     }
 
 
