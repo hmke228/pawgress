@@ -1,5 +1,5 @@
-from contextlib import closing
 import sqlite3
+from contextlib import closing
 from datetime import datetime
 from pathlib import Path
 from pprint import pprint
