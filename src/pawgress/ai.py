@@ -1,4 +1,4 @@
-"""Epic 1 AI contract; generation and provider integration are future work."""
+"""Provider-independent AI contract for the Epic 1 text prototype."""
 
 from dataclasses import dataclass
 from typing import Protocol
@@ -26,6 +26,10 @@ class AIResponse:
 
 
 class AIGenerator(Protocol):
-    """Provider-independent contract for future text generation."""
+    """Provider-independent contract for text generation."""
 
     def generate(self, user_input: str, rag_context: str) -> AIResponse: ...
+
+
+class AIGenerationError(RuntimeError):
+    """Generation failed or returned an unusable response."""
