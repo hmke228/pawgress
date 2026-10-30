@@ -43,3 +43,52 @@ def test_cli(
         assert result.stderr == ""
     else:
         assert "unrecognized arguments" in result.stderr
+
+
+@pytest.mark.parametrize(
+    "command",
+    [
+        [sys.executable, "-m", "pawgress"],
+        [str(Path(sysconfig.get_path("scripts")) / "pawgress")],
+    ],
+    ids=["module", "console-script"],
+)
+@pytest.mark.parametrize(
+    ("input_text", "expected_code"),
+    [
+        ("My dog saw another dog and remained calm.", 0),
+        ("", 2),
+        ("   ", 2),
+    ],
+    ids=["valid-text", "empty-text", "whitespace"],
+)
+def test_cli_text_input(
+    command: list[str],
+    input_text: str,
+    expected_code: int,
+    tmp_path: Path,
+) -> None:
+    result = subprocess.run(
+        [*command, input_text],
+        cwd=tmp_path,
+        capture_output=True,
+        text=True,
+        timeout=10,
+        check=False,
+    )
+
+    assert result.returncode == expected_code
+
+    if expected_code == 0:
+        assert "Demo Output — Placeholder Data" in result.stdout
+        assert (
+            "User-Provided Text: My dog saw another dog and remained calm."
+            in result.stdout
+        )
+        assert "Interpretation Placeholder" in result.stdout
+        assert "Comparison:\n\tNot available." in result.stdout
+        assert "End of Demo Output" in result.stdout
+        assert result.stderr == ""
+    else:
+        assert "No text provided." in result.stderr
+        assert result.stdout == ""
