@@ -11,11 +11,23 @@ OBSERVATION_PATTERNS = {
     "approaching another dog": ["approached", "approaching", "approach"],
     "barking": ["barked", "barking", "bark"],
     "jumping": ["jumped", "jumping", "jump"],
-    "tail wagging": ["tail wagging", "wagging tail"],
+    "tail wagging": [
+        "tail wagging",
+        "wagging tail",
+        "wagged its tail",
+        "wagging its tail",
+    ],
     "growling": ["growling", "growl"],
     "relaxed posture": ["relaxed", "calm", "calmly"],
     "social interaction": ["social", "greeted", "greeting", "interacted"],
 }
+
+MOCK_OBSERVATIONS = (
+    "The dog greeted another dog, wagged its tail, and stayed calm. "
+    "It also barked repeatedly, jumped toward the other dog, and growled briefly."
+)
+MOCK_DOG_NAME = "Tucker"
+MOCK_SCENE_CONTEXT = "Neighborhood park"
 
 
 def initialize_database():
@@ -213,26 +225,28 @@ def process_report(dog_name, scene_context, observations):
     }
 
 
-def prompt_required(prompt):
-    while True:
-        answer = input(prompt).strip()
-        if answer:
-            return answer
-        print("Please enter a value.")
+def mock_ai_observations():
+    """Return fixed observations in place of an AI-generated result."""
+    return MOCK_OBSERVATIONS
 
 
-if __name__ == "__main__":
+def main():
     initialize_database()
 
-    dog_name = prompt_required("Dog's name: ")
-    scene_context = prompt_required("Scene/context: ")
-    observations = prompt_required("What behaviors did you observe? ")
+    observations = mock_ai_observations()
+    print(f"Mock dog: {MOCK_DOG_NAME}")
+    print(f"Mock scene/context: {MOCK_SCENE_CONTEXT}")
+    print(f"\nMock AI observations: {observations}")
 
     result = process_report(
-        dog_name=dog_name,
-        scene_context=scene_context,
+        dog_name=MOCK_DOG_NAME,
+        scene_context=MOCK_SCENE_CONTEXT,
         observations=observations,
     )
 
     print("\nReport saved. Comparison:")
     pprint(result)
+
+
+if __name__ == "__main__":
+    main()

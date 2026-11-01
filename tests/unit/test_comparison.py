@@ -43,7 +43,7 @@ def test_initialize_database_creates_reports_table(database_path):
 
 
 def test_save_and_get_previous_reports_filters_orders_and_limits(database_path):
-    ""
+    """Test previous reports are filtered, ordered, and limited."""
     engine.initialize_database()
     for report_id, dog_name, created_at in [
         ("oldest", "Milo", "2026-01-01"),
@@ -102,3 +102,46 @@ def test_compare_reports_returns_baseline_without_history():
         ),
         "referenced_report_ids": [],
     }
+
+
+def test_mock_ai_observations_returns_canned_observations():
+    observations = engine.mock_ai_observations()
+
+    assert engine.extract_observations(observations) == [
+        "barking",
+        "jumping",
+        "tail wagging",
+        "growling",
+        "relaxed posture",
+        "social interaction",
+    ]
+
+
+def test_main_uses_mock_data_without_prompting(monkeypatch, capsys):
+    saved_reports = []
+
+    def fake_process_report(dog_name, scene_context, observations):
+        saved_reports.append((dog_name, scene_context, observations))
+        return {"report_id": "report-1"}
+
+    monkeypatch.setattr(engine, "initialize_database", lambda: None)
+    monkeypatch.setattr(engine, "process_report", fake_process_report)
+    monkeypatch.setattr(engine, "pprint", lambda _result: None)
+    monkeypatch.setattr(
+        "builtins.input",
+        lambda *_args: pytest.fail("The demo should not request input."),
+    )
+
+    engine.main()
+
+    assert saved_reports == [
+        (
+            engine.MOCK_DOG_NAME,
+            "Neighborhood park",
+            engine.MOCK_OBSERVATIONS,
+        )
+    ]
+    output = capsys.readouterr().out
+    assert f"Mock dog: {engine.MOCK_DOG_NAME}" in output
+    assert "Mock scene/context: Neighborhood park" in output
+    assert "Mock AI observations:" in output
