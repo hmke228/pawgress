@@ -37,8 +37,7 @@ def test_valid_input(text: str, capsys: pytest.CaptureFixture[str]) -> None:
     assert output.out == (
         "\nDemo Output — Placeholder Data\n\n"
         "Observations:\n"
-        "      - Observation Placeholder\n"
-        "      - User-Provided Text: Woof Woof Woof!\n"
+        "\tObservation Placeholder - User-Provided Text: Woof Woof Woof!\n"
         "Interpretation:\n"
         "\tInterpretation Placeholder - no AI analysis was performed.\n"
         "Comparison:\n"
@@ -68,15 +67,14 @@ def test_empty_input(
 
 def test_display_report_with_comparison(capsys: pytest.CaptureFixture[str]) -> None:
     display_report(
-        observations=["Observation 1.", "Observation 2."],
+        observations="This is a sample observation.",
         interpretation="This is a sample interpretation.",
         comparison="This is a sample comparison.",
     )
     output = capsys.readouterr()
     assert output.out == (
         "Observations:\n"
-        "      - Observation 1.\n"
-        "      - Observation 2.\n"
+        "\tThis is a sample observation.\n"
         "Interpretation:\n"
         "\tThis is a sample interpretation.\n"
         "Comparison:\n"
@@ -87,15 +85,14 @@ def test_display_report_with_comparison(capsys: pytest.CaptureFixture[str]) -> N
 
 def test_display_report_without_comparison(capsys: pytest.CaptureFixture[str]) -> None:
     display_report(
-        observations=["Observation 1.", "Observation 2."],
+        observations="This is a sample observation.",
         interpretation="This is a sample interpretation.",
         comparison=None,
     )
     output = capsys.readouterr()
     assert output.out == (
         "Observations:\n"
-        "      - Observation 1.\n"
-        "      - Observation 2.\n"
+        "\tThis is a sample observation.\n"
         "Interpretation:\n"
         "\tThis is a sample interpretation.\n"
         "Comparison:\n"
@@ -107,7 +104,7 @@ def test_display_report_without_comparison(capsys: pytest.CaptureFixture[str]) -
 @pytest.mark.parametrize("comparison", ["This is a valid comparison.", None])
 def test_valid_report(comparison: str | None) -> None:
     report = {
-        "observations": ["Observation 1", "Observation 2"],
+        "observations": "This is a valid observation.",
         "interpretation": "This is a valid interpretation.",
         "comparison": comparison,
     }
@@ -122,17 +119,17 @@ def test_invalid_report_type(report: object) -> None:
 
 def test_invalid_report_missing_observations() -> None:
     report = {
-        "interpretation": "This is not a list of observations.",
+        "interpretation": "This is a valid interpretation.",
         "comparison": "This is a valid comparison.",
     }
     with pytest.raises(
-        ValueError, match="Report must contain a non-empty list of observations."
+        ValueError, match="Observations must contain a non-empty string."
     ):
         validate_report(report)
 
 
-@pytest.mark.parametrize("observations", [[], None, "Observation", 0])
-def test_invalid_observations_type(observations: object) -> None:
+@pytest.mark.parametrize("observations", ["", "   ", None, ["Observation"], 0])
+def test_invalid_observations(observations: object) -> None:
     report = {
         "observations": observations,
         "interpretation": "This is a valid interpretation.",
@@ -140,29 +137,14 @@ def test_invalid_observations_type(observations: object) -> None:
     }
     with pytest.raises(
         ValueError,
-        match="Report must contain a non-empty list of observations",
-    ):
-        validate_report(report)
-
-
-@pytest.mark.parametrize("observation", ["", "   ", None, 0])
-def test_invalid_report_invalid_observation(observation: object) -> None:
-    report = {
-        "observations": ["Observation 1", observation],
-        "interpretation": "This is a valid interpretation.",
-        "comparison": None,
-    }
-
-    with pytest.raises(
-        ValueError,
-        match="Each observation must contain a non-empty string.",
+        match="Observations must contain a non-empty string.",
     ):
         validate_report(report)
 
 
 def test_invalid_report_missing_interpretation() -> None:
     report = {
-        "observations": ["Observation 1", "Observation 2"],
+        "observations": "This is a valid observation.",
         "comparison": "This is a valid comparison.",
     }
     with pytest.raises(
@@ -174,7 +156,7 @@ def test_invalid_report_missing_interpretation() -> None:
 @pytest.mark.parametrize("interpretation", ["", "   ", None, 0, []])
 def test_invalid_report_invalid_interpretation(interpretation: object) -> None:
     report = {
-        "observations": ["Observation 1", "Observation 2"],
+        "observations": "This is a valid observation.",
         "interpretation": interpretation,
         "comparison": None,
     }
@@ -187,7 +169,7 @@ def test_invalid_report_invalid_interpretation(interpretation: object) -> None:
 
 def test_invalid_report_missing_comparison() -> None:
     report = {
-        "observations": ["Observation 1", "Observation 2"],
+        "observations": "This is a valid observation.",
         "interpretation": "This is a valid interpretation.",
     }
     with pytest.raises(ValueError, match="Report must contain a 'comparison' field."):
@@ -197,7 +179,7 @@ def test_invalid_report_missing_comparison() -> None:
 @pytest.mark.parametrize("comparison", ["", "   ", [], {}, 0])
 def test_invalid_report_invalid_comparison(comparison: object) -> None:
     report = {
-        "observations": ["Observation 1", "Observation 2"],
+        "observations": "This is a valid observation.",
         "interpretation": "This is a valid interpretation.",
         "comparison": comparison,
     }
@@ -214,7 +196,7 @@ def test_main_rejects_invalid_report(
 ) -> None:
     def fake_demo(text: str) -> dict[str, object]:
         return {
-            "observations": [],
+            "observations": "",
             "interpretation": "This is a sample interpretation.",
             "comparison": None,
         }
@@ -226,6 +208,5 @@ def test_main_rejects_invalid_report(
     output = capsys.readouterr()
     assert output.out == ""
     assert output.err == (
-        "Unable to display report: "
-        "Report must contain a non-empty list of observations.\n"
+        "Unable to display report: Observations must contain a non-empty string.\n"
     )

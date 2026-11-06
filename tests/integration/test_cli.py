@@ -82,10 +82,10 @@ def test_cli_text_input(
     if expected_code == 0:
         assert "Demo Output — Placeholder Data" in result.stdout
         assert (
-            "User-Provided Text: My dog saw another dog and remained calm."
+            "Observations:\n\tObservation Placeholder - User-Provided Text: My dog saw another dog and remained calm."
             in result.stdout
         )
-        assert "Interpretation Placeholder" in result.stdout
+        assert "Interpretation:\n\tInterpretation Placeholder" in result.stdout
         assert "Comparison:\n\tNot available." in result.stdout
         assert "End of Demo Output" in result.stdout
         assert result.stderr == ""

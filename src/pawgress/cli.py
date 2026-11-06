@@ -11,12 +11,8 @@ def validate_report(report: object) -> None:
         raise ValueError("Report must be a dictionary.")
 
     observations = report.get("observations")
-    if not isinstance(observations, list) or not observations:
-        raise ValueError("Report must contain a non-empty list of observations.")
-
-    for observation in observations:
-        if not isinstance(observation, str) or not observation.strip():
-            raise ValueError("Each observation must contain a non-empty string.")
+    if not isinstance(observations, str) or not observations.strip():
+        raise ValueError("Observations must contain a non-empty string.")
 
     interpretation = report.get("interpretation")
     if not isinstance(interpretation, str) or not interpretation.strip():
@@ -32,14 +28,12 @@ def validate_report(report: object) -> None:
 
 
 def display_report(
-    observations: Sequence[str],
+    observations: str,
     interpretation: str,
     comparison: str | None,
 ) -> None:
     """Display the report generated from AI and Comparison components."""
-    print("Observations:")
-    for obs in observations:
-        print(f"      - {obs}")
+    print(f"Observations:\n\t{observations}")
     print(f"Interpretation:\n\t{interpretation}")
     if comparison is None:
         print("Comparison:\n\tNot available.")
@@ -50,7 +44,7 @@ def display_report(
 def cli_demo(text: str) -> dict[str, object]:
     """Return placeholder data until the shared pipeline is connected."""
     return {
-        "observations": ["Observation Placeholder", f"User-Provided Text: {text}"],
+        "observations": f"Observation Placeholder - User-Provided Text: {text}",
         "interpretation": "Interpretation Placeholder - no AI analysis was performed.",
         "comparison": None,
     }
