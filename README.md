@@ -5,9 +5,9 @@ application helps owners understand one target dog's observable behaviors and
 compare observations over time. The existing team Project Plan defines the
 product requirements and architecture.
 
-This repository currently contains the development setup and a minimal CLI that
-prints help. Report schemas, image analysis, retrieval, behavioral comparison,
-and persistence are not implemented.
+The Epic 1 CLI connects text input, test-knowledge retrieval, AI generation, and
+deterministic comparison against one mock historical report. Images and the full
+MVP report schema remain future work.
 
 ## Development setup
 
@@ -35,8 +35,21 @@ pawgress --help
 python -m pawgress --help
 ```
 
-Both entry points also print help when called without arguments. There are no
-application commands yet.
+Both entry points also print help when called without arguments. To run the full
+text pipeline, activate `.venv`, set `OPENAI_API_KEY` securely in your environment,
+and set `OPENAI_MODEL` to your Structured Outputs-capable model ID. Then run:
+
+```sh
+pawgress "My dog barked, jumped, and had a tucked tail."
+python -m pawgress "My dog barked, jumped, and had a tucked tail."
+```
+
+Each invocation makes one live AI request. RAG supplies a string from the small
+test knowledge base; AI returns `observations` and `interpretation`. Comparison
+then compares the AI observations with one mock report ("The dog barked and stayed
+calm."). The CLI displays both AI fields unchanged plus the comparison summary.
+This pipeline does not read or write SQLite; the standalone database code remains
+available for later use. Tests mock HTTP responses and require no credentials.
 
 ## Project layout and architecture
 
@@ -45,9 +58,10 @@ src/pawgress/
     __init__.py              Python package
     __main__.py              python -m pawgress entry point
     cli.py                   CLI entry point and help
-    ai.py                    AI Report Generation placeholder
-    rag.py                   RAG placeholder
-    behavioral_comparison.py Behavioral Comparison placeholder
+    ai.py                    AI response and generator contract
+    rag.py                   Test-knowledge retrieval and context formatting
+    behavioral_comparison.py Comparison logic and standalone SQLite demo
+    pipeline.py              Epic 1 text orchestration with mock history
     storage.py               SQLite storage placeholder
 tests/unit/                  Direct unit tests and component import tests
 tests/integration/           CLI subprocess smoke tests
@@ -56,9 +70,9 @@ scripts/lint.sh              Ruff lint and format checks
 
 The Project Plan's four main components are CLI, AI Report Generation, RAG, and
 Behavioral Comparison. Storage is a supporting module: the team has selected
-**SQLite**, using Python's built-in `sqlite3` module when persistence is
-implemented. No separate database service or SQLite package is needed. Database
-schemas, queries, and component interfaces remain future work.
+**SQLite**, using Python's built-in `sqlite3` module. The comparison component has
+a standalone database prototype; the integrated Epic 1 pipeline uses mock history.
+Production storage interfaces remain future work.
 
 Epic 1 AI generation uses OpenAI behind the provider-independent `AIGenerator`
 interface. Keep the setup lightweight and follow the existing Project Plan;
