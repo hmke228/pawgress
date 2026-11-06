@@ -31,18 +31,29 @@ def test_module_entry(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 @pytest.mark.parametrize("text", ["Woof Woof Woof!", "   Woof Woof Woof!  "])
-def test_valid_input(text: str, capsys: pytest.CaptureFixture[str]) -> None:
+def test_valid_input(
+    text: str, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    def fake_report(user_input: str) -> dict[str, str]:
+        assert user_input == "Woof Woof Woof!"
+        return {
+            "observations": "The dog barked.",
+            "interpretation": "Its emotional state is uncertain.",
+            "comparison": "Consistent observations include barking.",
+        }
+
+    monkeypatch.setattr(cli, "generate_report", fake_report)
     assert main([text]) == 0
     output = capsys.readouterr()
     assert output.out == (
-        "\nDemo Output — Placeholder Data\n\n"
+        "\nEpic 1 Report — Comparison uses mock history\n\n"
         "Observations:\n"
-        "\tObservation Placeholder - User-Provided Text: Woof Woof Woof!\n"
+        "\tThe dog barked.\n"
         "Interpretation:\n"
-        "\tInterpretation Placeholder - no AI analysis was performed.\n"
+        "\tIts emotional state is uncertain.\n"
         "Comparison:\n"
-        "\tNot available.\n"
-        "\nEnd of Demo Output\n\n"
+        "\tConsistent observations include barking.\n"
+        "\nEnd of Report\n\n"
     )
     assert output.err == ""
 
@@ -52,9 +63,9 @@ def test_empty_input(
     text: str, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
     def reject_demo_call(text: str) -> dict[str, object]:
-        pytest.fail("cli_demo cannot be called for empty input.")
+        pytest.fail("generate_report cannot be called for empty input.")
 
-    monkeypatch.setattr(cli, "cli_demo", reject_demo_call)
+    monkeypatch.setattr(cli, "generate_report", reject_demo_call)
 
     with pytest.raises(SystemExit) as error:
         main([text])
@@ -201,7 +212,7 @@ def test_main_rejects_invalid_report(
             "comparison": None,
         }
 
-    monkeypatch.setattr(cli, "cli_demo", fake_demo)
+    monkeypatch.setattr(cli, "generate_report", fake_demo)
 
     assert main(["My dog saw another dog and remained calm."]) == 1
 

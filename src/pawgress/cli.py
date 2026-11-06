@@ -1,8 +1,11 @@
-"""Command-line entry point for Pawgress: Demo accepts and validates user input text and displays a report with placeholder data"""
+"""Collect text and display the complete Epic 1 report."""
 
 import argparse
 import sys
 from collections.abc import Sequence
+
+from pawgress.ai import AIGenerationError
+from pawgress.pipeline import generate_report
 
 
 def validate_report(report: object) -> None:
@@ -41,15 +44,6 @@ def display_report(
         print(f"Comparison:\n\t{comparison}")
 
 
-def cli_demo(text: str) -> dict[str, object]:
-    """Return placeholder data until the shared pipeline is connected."""
-    return {
-        "observations": f"Observation Placeholder - User-Provided Text: {text}",
-        "interpretation": "Interpretation Placeholder - no AI analysis was performed.",
-        "comparison": None,
-    }
-
-
 def main(argv: Sequence[str] | None = None) -> int:
     """Accept & validate command-line arguments and process the input text."""
     parser = argparse.ArgumentParser(
@@ -70,17 +64,17 @@ def main(argv: Sequence[str] | None = None) -> int:
         parser.error("No text provided.")
 
     try:
-        report = cli_demo(text)
+        report = generate_report(text)
         validate_report(report)
-    except ValueError as error:
+    except (ValueError, AIGenerationError) as error:
         print(f"Unable to display report: {error}", file=sys.stderr)
         return 1
 
-    print("\nDemo Output — Placeholder Data\n")
+    print("\nEpic 1 Report — Comparison uses mock history\n")
     display_report(
         observations=report["observations"],
         interpretation=report["interpretation"],
         comparison=report["comparison"],
     )
-    print("\nEnd of Demo Output\n")
+    print("\nEnd of Report\n")
     return 0
