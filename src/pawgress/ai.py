@@ -1,6 +1,6 @@
 """Provider-independent AI contract for the Epic 1 text prototype."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, fields
 from typing import Protocol
 
 
@@ -17,7 +17,8 @@ class AIResponse:
     interpretation: str
 
     def __post_init__(self) -> None:
-        for field_name in ("observations", "interpretation"):
+        for field in fields(self):
+            field_name = field.name
             value = getattr(self, field_name)
             if not isinstance(value, str):
                 raise TypeError(f"{field_name} must be a string")
