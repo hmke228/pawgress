@@ -110,3 +110,67 @@ def test_retrieve_invalid_min_score():
     """Check that an invalid minimum score is rejected."""
     with pytest.raises(ValueError, match="min_score"):
         retrieve_context("tucked tail", min_score=0)
+
+
+def test_retrieve_custom_knowledge_base():
+    """Check retrieval using a custom knowledge base."""
+    entries = [
+        {
+            "id": "ref_001",
+            "topic": "Canine body language",
+            "text": "A tucked tail may indicate fear or discomfort.",
+            "source_title": "Example Source",
+            "source_url": "https://example.com/reference",
+        }
+    ]
+
+    results = retrieve_context("tucked tail", knowledge_base=entries)
+
+    assert len(results) == 1
+    assert results[0]["id"] == "ref_001"
+
+
+def test_retrieve_empty_custom_knowledge_base():
+    """Check that an empty knowledge base returns no references."""
+    results = retrieve_context("tucked tail", knowledge_base=[])
+
+    assert results == []
+
+
+def test_format_context_with_source():
+    """Check that professional references include source attribution."""
+    entries = [
+        {
+            "id": "ref_001",
+            "topic": "Canine body language",
+            "text": "A tucked tail may indicate fear or discomfort.",
+            "source_title": "Example Source",
+            "source_url": "https://example.com/reference",
+        }
+    ]
+
+    context = format_context(entries)
+
+    assert "[ref_001] A tucked tail may indicate fear or discomfort." in context
+    assert "Source: Example Source" in context
+    assert "https://example.com/reference" in context
+
+
+def test_build_rag_context_with_professional_reference():
+    """Check that professional references are formatted for AI generation."""
+    entries = [
+        {
+            "id": "ref_001",
+            "topic": "Canine body language",
+            "text": "A tucked tail may indicate fear or discomfort.",
+            "source_title": "Example Source",
+            "source_url": "https://example.com/reference",
+        }
+    ]
+
+    context = build_rag_context("My dog has a tucked tail.", knowledge_base=entries)
+
+    assert "[ref_001]" in context
+    assert "A tucked tail may indicate fear or discomfort." in context
+    assert "Source: Example Source" in context
+    assert "https://example.com/reference" in context
