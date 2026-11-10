@@ -53,7 +53,10 @@ def extract_keywords(text: str) -> set[str]:
 
 
 def retrieve_context(
-    query: str, top_k: int | None = None, min_score: int = 1
+    query: str,
+    top_k: int | None = None,
+    min_score: int = 1,
+    knowledge_base: list[dict[str, str]] | None = None,
 ) -> list[dict[str, str]]:
     """Retrieve references ranked by keyword overlap."""
     if top_k is not None and top_k < 0:
@@ -69,7 +72,7 @@ def retrieve_context(
 
     matches = []
 
-    for entry in KNOWLEDGE_BASE:
+    for entry in knowledge_base if knowledge_base is not None else KNOWLEDGE_BASE:
         entry_words = extract_keywords(entry["text"])
         score = len(query_words & entry_words)
 
@@ -88,19 +91,27 @@ def retrieve_context(
 
 
 def format_context(entries: list[dict[str, str]]) -> str:
-    """Format retrieved knowledge entries for AI generation."""
+    """Format retrieved knowledge entries with available source information."""
     if not entries:
         return ""
 
     lines = []
 
     for entry in entries:
-        lines.append(f"[{entry['id']}] {entry['text']}")
+        line = f"[{entry['id']}] {entry['text']}"
+
+        if "source_title" in entry and "source_url" in entry:
+            line += f"\nSource: {entry['source_title']} ({entry['source_url']})"
+
+        lines.append(line)
 
     return "\n".join(lines)
 
 
-def build_rag_context(user_input: str) -> str:
+def build_rag_context(
+    user_input: str,
+    knowledge_base: list[dict[str, str]] | None = None,
+) -> str:
     """Retrieve and format knowledge for the AI component."""
-    entries = retrieve_context(user_input)
+    entries = retrieve_context(user_input, knowledge_base=knowledge_base)
     return format_context(entries)
