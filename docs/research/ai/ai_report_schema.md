@@ -1,6 +1,6 @@
 # Pawgress MVP Schema Design (v1)
 
-Epic 2 AI working contract; RAG/Comparison integration details remain pending teammate confirmation. Prioritize a functional end-to-end MVP with minimal variables and nesting. The standalone AI entry point is described below; the CLI still runs the Epic 1 pipeline.
+Epic 2 AI working contract: RAG supplies professional knowledge to AI; Comparison owns historical report storage, retrieval and filtering through its database. Prioritize a functional end-to-end MVP with minimal variables and nesting. The standalone AI entry point is described below; the CLI still runs the Epic 1 pipeline.
 
 ## 1. MVP Scope
 
@@ -29,8 +29,7 @@ The first report must use professional canine behavior knowledge retrieved by RA
 
 ```json
 {
-  "canine_knowledge": [{"source": "Professional canine behavior reference", "content": "Relevant canine body language and behavior information"}],
-  "previous_reports": []
+  "canine_knowledge": [{"source": "Professional canine behavior reference", "content": "Relevant canine body language and behavior information"}]
 }
 ```
 
@@ -49,11 +48,11 @@ Automatically load the saved dog profile. Collect new photos and an optional new
 
 For both first and subsequent reports, AI generates `scene_context` using the user's free-text `situation` description from the CLI (when supplied) and environmental details observable in the submitted images. It also produces current behavioral observations. Keep `scene_context` as one descriptive field covering relevant surroundings (such as indoor/outdoor setting, other dogs, people, and activity). Distinguish user-reported information from directly observable visual evidence in the wording, without adding schema variables. For example, other dogs mentioned by the owner but absent from the images may contribute to scene context as user-reported information, but must not be presented as confirmed visual observations. Do not invent environmental conditions.
 
-1. Identify behaviorally relevant historical reports based on `scene_context`; exact matches or shared environmental keywords alone do not determine comparability. For example, whether outdoor with multiple dogs, indoor with multiple dogs, or outdoor with one dog is most comparable depends on the specific behavior being analyzed. The scene-matching algorithm is **TBD — Pending Team Discussion**; do not implement it yet.
+1. Behavioral Comparison retrieves historical reports from its own database and filters them using current `scene_context`; exact matches or shared environmental keywords alone do not determine comparability. For example, whether outdoor with multiple dogs, indoor with multiple dogs, or outdoor with one dog is most comparable depends on the specific behavior being analyzed. The Comparison teammate decides the matching algorithm; it is not implemented here.
 2. Sort matching reports by `created_at` descending (newest first), then select up to three. Return fewer when fewer relevant reports exist; never fill the result with unrelated reports.
-3. Give Behavioral Comparison the current scene context and observations plus the selected reports' IDs, timestamps, scene contexts, and observations.
-4. Compare current behavior with those historical observations. Return a short comparison summary and the IDs of reports actually referenced. Acknowledge environmental differences and limited photographic evidence; do not automatically label changes as improvement or regression.
-5. Behavioral Comparison fills `comparison` and `referenced_report_ids`, preserves all other AI content, and returns the final report to CLI. With no comparable history, retain `comparison: null` and an empty ID list. RAG and Comparison coordinate where matching/filtering happens; AI does not integrate their results.
+3. AI passes the current report to Behavioral Comparison, which reads selected historical IDs, timestamps, scene contexts and observations from its database.
+4. Comparison compares current observations with selected history and produces a short summary plus actually referenced IDs. The Comparison teammate decides whether to use OpenAI for this summary. Acknowledge environmental differences and limited photographic evidence; do not automatically label changes as improvement or regression.
+5. Behavioral Comparison fills `comparison` and `referenced_report_ids`, preserves all other AI content, saves the final report and returns it to CLI. With no comparable history, retain `comparison: null` and an empty ID list. RAG does not handle report history; AI does not integrate comparison results.
 
 ## 4. Final Report Schema
 
@@ -79,9 +78,9 @@ For the first report, `comparison` is `null` and `referenced_report_ids` is `[]`
 
 ## 5. End-to-End Data Flow
 
-**First report:** CLI collects profile + situation + images → RAG retrieves professional canine knowledge → AI generates current report content → application assigns ID and timestamp → Comparison receives no history and retains empty comparison fields → supporting Storage saves profile/report → CLI displays the final report.
+**First report:** CLI collects profile + situation + images and the application saves the profile → RAG retrieves professional canine knowledge → AI generates current report content → application assigns ID and timestamp → Comparison finds no history in its database, retains empty comparison fields and saves the final report → CLI displays the final report.
 
-**Subsequent reports:** CLI provides saved profile + optional situation + images → RAG provides professional knowledge → AI generates current report content → application assigns ID and timestamp → RAG supplies history to Comparison, coordinating selection using current scene context → Comparison compares observations with up to three relevant reports and fills comparison fields → supporting Storage saves the new report → CLI displays the final report. No comparable history uses the same empty fields as the first report; exclude the current report from history.
+**Subsequent reports:** CLI provides saved profile + optional situation + images → RAG provides professional knowledge → AI generates current report content → application assigns ID and timestamp → Comparison retrieves and filters its database history using current scene context, compares observations with up to three relevant reports and fills comparison fields → Comparison saves the final report → CLI displays it. No comparable history uses the same empty fields as the first report; exclude the current report from history.
 
 ## 6. Component Interfaces
 
@@ -89,14 +88,14 @@ For the first report, `comparison` is `null` and `referenced_report_ids` is `[]`
 | --- | --- |
 | CLI | Collects profile, situation, and images; loads the saved profile for later analyses; displays the final report. |
 | AI Report Generation | Receives profile, situation, images and professional references; produces current scene, observations, interpretation, safety assessment and recommendations. |
-| RAG | Uses situation and scene context to provide professional references and retrieve relevant historical reports, including IDs, timestamps, scene contexts, and observations. |
-| Behavioral Comparison | Receives the current AI report and RAG history; fills comparison and actually referenced IDs, preserves other AI fields, and returns the final report to CLI. |
+| RAG | Collects and retrieves professional canine behavior references for AI; does not store, retrieve or filter historical reports. |
+| Behavioral Comparison | Receives the current AI report; owns history storage, retrieval and filtering in its database; generates comparison, optionally using OpenAI; fills comparison and actually referenced IDs, preserves other AI fields, saves and returns the final report to CLI. |
 
-Persistent storage saves the profile and reports; RAG retrieves relevant information from saved data and the professional knowledge base. Storage is a supporting module using the planned standard-library `sqlite3`; database schemas, queries, and storage interfaces are not finalized or implemented here.
+Comparison owns report persistence and historical queries through its database; profile persistence remains application support. The planned storage technology remains standard-library `sqlite3`, with Storage as a supporting module. This AI change does not implement database schemas, queries or storage interfaces.
 
 ## 7. Design Principles and Open Questions
 
-Keep the MVP minimal and reuse one report schema. Exclude multi-dog management, user accounts, complex behavior scoring, and advanced trend detection. Do not make medical or behavioral diagnoses; acknowledge uncertainty when image evidence is insufficient. Team review must resolve scene matching, storage details, and final interfaces before implementation.
+Keep the MVP minimal and reuse one report schema. Exclude multi-dog management, user accounts, complex behavior scoring, and advanced trend detection. Do not make medical or behavioral diagnoses; acknowledge uncertainty when image evidence is insufficient. Comparison owns the remaining scene-matching and report-storage implementation decisions; concrete integration interfaces remain to be coordinated.
 
 ## 8. Standalone AI entry point
 
