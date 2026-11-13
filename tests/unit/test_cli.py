@@ -140,7 +140,7 @@ def test_invalid_report_missing_observations() -> None:
 
 
 @pytest.mark.parametrize("observations", ["", "   ", None, ["Observation"], 0])
-def test_invalid_observations(observations: object) -> None:
+def test_invalid_report_invalid_observations(observations: object) -> None:
     report = {
         "observations": observations,
         "interpretation": "This is a valid interpretation.",
