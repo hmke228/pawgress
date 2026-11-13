@@ -2,6 +2,7 @@
 
 import os
 from dataclasses import asdict
+from datetime import datetime, timezone
 
 from openai import OpenAI
 
@@ -20,13 +21,17 @@ def run_pipeline(user_input: str, generator: AIGenerator) -> dict[str, str]:
         [
             {
                 "report_id": "epic1-mock-history",
+                "created_at": "2026-01-01T00:00:00+00:00",
+                "scene_context": None,
                 "behavioral_observations": {
                     "current": "The dog barked and stayed calm."
                 },
             }
         ],
     )
-    return {**asdict(response), "comparison": comparison["comparison_summary"]}
+    report = {**asdict(response), "comparison": comparison["comparison_summary"]}
+    report["created_at"] = datetime.now(timezone.utc).isoformat()
+    return report
 
 
 def generate_report(user_input: str) -> dict[str, str]:

@@ -125,8 +125,21 @@ def handle(request):
         }]
     }]})
 with OpenAI(max_retries=0, http_client=httpx.Client(transport=httpx.MockTransport(handle))) as client:
-    with patch("pawgress.pipeline.OpenAI", return_value=client), patch(
-        "sqlite3.connect", side_effect=AssertionError("Unexpected SQLite access")
+    with (
+        patch("pawgress.pipeline.OpenAI", return_value=client),
+        patch(
+            "pawgress.pipeline.compare_reports",
+            return_value={
+                "comparison_summary": (
+                    "Consistent observations include barking. "
+                    "Newly observed behaviors include jumping. "
+                    "Previously observed behaviors not mentioned in the current report "
+                    "include relaxed posture."
+                ),
+                "referenced_report_ids": ["epic1-mock-history"],
+            },
+        ),
+        patch("sqlite3.connect", side_effect=AssertionError("Unexpected SQLite access")),
     ):
         if entry == "pawgress":
             runpy.run_module(entry, run_name="__main__")

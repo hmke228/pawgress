@@ -24,6 +24,10 @@ def validate_report(report: object) -> None:
     if "comparison" not in report:
         raise ValueError("Report must contain a 'comparison' field.")
 
+    created_at = report.get("created_at")
+    if not isinstance(created_at, str) or not created_at.strip():
+        raise ValueError("Report must contain a 'created_at' timestamp.")
+
     comparison = report["comparison"]
     if comparison is not None:
         if not isinstance(comparison, str) or not comparison.strip():

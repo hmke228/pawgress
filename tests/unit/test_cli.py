@@ -40,6 +40,7 @@ def test_valid_input(
             "observations": "The dog barked.",
             "interpretation": "Its emotional state is uncertain.",
             "comparison": "Consistent observations include barking.",
+            "created_at": "2026-01-01T00:00:00+00:00",
         }
 
     monkeypatch.setattr(cli, "generate_report", fake_report)
@@ -118,8 +119,35 @@ def test_valid_report(comparison: str | None) -> None:
         "observations": "This is a valid observation.",
         "interpretation": "This is a valid interpretation.",
         "comparison": comparison,
+        "created_at": "2026-01-01T00:00:00+00:00",
     }
     validate_report(report)
+
+
+@pytest.mark.parametrize("created_at", ["", "   ", None, 0])
+def test_invalid_report_created_at(created_at: object) -> None:
+    report = {
+        "observations": "This is a valid observation.",
+        "interpretation": "This is a valid interpretation.",
+        "comparison": None,
+        "created_at": created_at,
+    }
+    with pytest.raises(
+        ValueError, match="Report must contain a 'created_at' timestamp."
+    ):
+        validate_report(report)
+
+
+def test_invalid_report_missing_created_at() -> None:
+    report = {
+        "observations": "This is a valid observation.",
+        "interpretation": "This is a valid interpretation.",
+        "comparison": None,
+    }
+    with pytest.raises(
+        ValueError, match="Report must contain a 'created_at' timestamp."
+    ):
+        validate_report(report)
 
 
 @pytest.mark.parametrize("report", [None, [], "invalid report", 0])
@@ -182,6 +210,7 @@ def test_invalid_report_missing_comparison() -> None:
     report = {
         "observations": "This is a valid observation.",
         "interpretation": "This is a valid interpretation.",
+        "created_at": "2026-01-01T00:00:00+00:00",
     }
     with pytest.raises(ValueError, match="Report must contain a 'comparison' field."):
         validate_report(report)
@@ -193,6 +222,7 @@ def test_invalid_report_invalid_comparison(comparison: object) -> None:
         "observations": "This is a valid observation.",
         "interpretation": "This is a valid interpretation.",
         "comparison": comparison,
+        "created_at": "2026-01-01T00:00:00+00:00",
     }
 
     with pytest.raises(

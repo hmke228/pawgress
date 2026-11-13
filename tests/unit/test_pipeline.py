@@ -1,6 +1,7 @@
 """Exercise real RAG, AI parsing, and comparison with offline HTTP responses."""
 
 import json
+from datetime import datetime, timedelta
 from unittest.mock import patch
 
 import httpx
@@ -73,6 +74,8 @@ def test_pipeline_preserves_ai_fields(
         patch("sqlite3.connect", side_effect=AssertionError("No database in Epic 1")),
     ):
         report = generate_report(text)
+    created_at = report.pop("created_at")
+    assert datetime.fromisoformat(created_at).utcoffset() == timedelta(0)
     assert report == {
         **fields,
         "comparison": (
