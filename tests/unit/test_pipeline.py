@@ -58,6 +58,18 @@ def test_pipeline_preserves_ai_fields(
             http_client=httpx.Client(transport=httpx.MockTransport(handle))
         ) as client,
         patch("pawgress.pipeline.OpenAI", return_value=client),
+        patch(
+            "pawgress.pipeline.compare_reports",
+            return_value={
+                "comparison_summary": (
+                    "Consistent observations include barking. "
+                    "Newly observed behaviors include jumping. "
+                    "Previously observed behaviors not mentioned in the current report "
+                    "include relaxed posture."
+                ),
+                "referenced_report_ids": ["epic1-mock-history"],
+            },
+        ),
         patch("sqlite3.connect", side_effect=AssertionError("No database in Epic 1")),
     ):
         report = generate_report(text)
