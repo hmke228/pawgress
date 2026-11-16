@@ -152,7 +152,7 @@ runs lint/format checks, unit tests with the coverage gate, and integration test
 
 - Work on separate `chore/`, `feat/`, or `fix/` branches; never commit directly to
   `main`. Merge through pull requests with at least one approval and CODEOWNERS review.
-- Each PR must have fewer than 100 changed lines, counting additions and deletions.
+- Each PR must have fewer than 300 changed lines, counting additions and deletions.
   Keep PRs focused; an issue may have multiple PRs. Use `Refs #2`, `Refs #3`, or
   `Refs #4`; close issues only after all acceptance criteria are met. Keep #5 open
   for the team's requirements and MVP backlog decisions.
