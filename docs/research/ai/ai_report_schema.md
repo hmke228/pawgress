@@ -1,12 +1,12 @@
 # Pawgress MVP Schema Design (v1)
 
-Epic 2 AI working contract: RAG supplies professional knowledge to AI; Comparison owns historical report storage, retrieval and filtering through its database. Prioritize a functional end-to-end MVP with minimal variables and nesting. The standalone AI entry point is described below; the CLI still runs the Epic 1 pipeline.
+Epic 2 AI working contract: RAG supplies professional knowledge to AI; Comparison owns historical report storage, retrieval and filtering through its database. Prioritize a functional end-to-end MVP with minimal variables and nesting. The AI entry point is described below; `pawgress --dog` now runs the integrated Epic 2 pipeline.
 
 ## 1. MVP Scope
 
 - Analyze one target dog. Collect its basic profile and behavioral background once, save them, and reuse them for future analyses.
 - Accept multiple photos and a detailed free-text situation description. For subsequent reports, the new situation description is optional.
-- The general canine behavior knowledge base has **not been populated yet**. It must contain reliable professional canine behavior references **before the first report is generated**. Researching, collecting, and organizing these resources are separate work handled by the RAG component.
+- The bundled general canine behavior knowledge base currently contains **one sourced reference**. It must contain reliable professional canine behavior references **before the first report is generated**; broader coverage still needs team curation. Researching, collecting, and organizing these resources are separate work handled by the RAG component.
 - Save every generated report for future retrieval, with a unique `report_id` and `created_at`; never overwrite previous reports. Prioritize historical reports with behaviorally relevant scene similarity rather than simply selecting the three most recent reports.
 
 ## 2. First Report: No Previous Reports
@@ -48,7 +48,7 @@ Automatically load the saved dog profile. Collect new photos and an optional new
 
 For both first and subsequent reports, AI generates `scene_context` using the user's free-text `situation` description from the CLI (when supplied) and environmental details observable in the submitted images. It also produces current behavioral observations. Keep `scene_context` as one descriptive field covering relevant surroundings (such as indoor/outdoor setting, other dogs, people, and activity). Distinguish user-reported information from directly observable visual evidence in the wording, without adding schema variables. For example, other dogs mentioned by the owner but absent from the images may contribute to scene context as user-reported information, but must not be presented as confirmed visual observations. Do not invent environmental conditions.
 
-1. Behavioral Comparison retrieves historical reports from its own database and filters them using current `scene_context`; exact matches or shared environmental keywords alone do not determine comparability. For example, whether outdoor with multiple dogs, indoor with multiple dogs, or outdoor with one dog is most comparable depends on the specific behavior being analyzed. The Comparison teammate decides the matching algorithm; it is not implemented here.
+1. Behavioral Comparison retrieves historical reports from its own database and filters them using current `scene_context`; exact matches or shared environmental keywords alone do not determine comparability. For example, whether outdoor with multiple dogs, indoor with multiple dogs, or outdoor with one dog is most comparable depends on the specific behavior being analyzed. The integrated Comparison component uses a structured OpenAI request to filter all candidate scenes before selecting the latest matches.
 2. Sort matching reports by `created_at` descending (newest first), then select up to three. Return fewer when fewer relevant reports exist; never fill the result with unrelated reports.
 3. AI passes the current report to Behavioral Comparison, which reads selected historical IDs, timestamps, scene contexts and observations from its database.
 4. Comparison compares current observations with selected history and produces a short summary plus actually referenced IDs. The Comparison teammate decides whether to use OpenAI for this summary. Acknowledge environmental differences and limited photographic evidence; do not automatically label changes as improvement or regression.
@@ -91,11 +91,11 @@ For the first report, `comparison` is `null` and `referenced_report_ids` is `[]`
 | RAG | Collects and retrieves professional canine behavior references for AI; does not store, retrieve or filter historical reports. |
 | Behavioral Comparison | Receives the current AI report; owns history storage, retrieval and filtering in its database; generates comparison, optionally using OpenAI; fills comparison and actually referenced IDs, preserves other AI fields, saves and returns the final report to CLI. |
 
-Comparison owns report persistence and historical queries through its database; profile persistence remains application support. The planned storage technology remains standard-library `sqlite3`, with Storage as a supporting module. This AI change does not implement database schemas, queries or storage interfaces.
+Comparison owns report persistence and historical queries through its database; profile persistence remains application support. The planned storage technology remains standard-library `sqlite3`, with Storage as a supporting module. The integrated workflow uses `ReportStore` with a single profile and complete JSON reports in SQLite; the standalone demo table remains separate.
 
 ## 7. Design Principles and Open Questions
 
-Keep the MVP minimal and reuse one report schema. Exclude multi-dog management, user accounts, complex behavior scoring, and advanced trend detection. Do not make medical or behavioral diagnoses; acknowledge uncertainty when image evidence is insufficient. Comparison owns the remaining scene-matching and report-storage implementation decisions; concrete integration interfaces remain to be coordinated.
+Keep the MVP minimal and reuse one report schema. Exclude multi-dog management, user accounts, complex behavior scoring, and advanced trend detection. Do not make medical or behavioral diagnoses; acknowledge uncertainty when image evidence is insufficient. Comparison owns scene matching and final-report persistence through the supporting store. Large-history batching and broader reference coverage remain future refinements.
 
 ## 8. Standalone AI entry point
 
@@ -103,4 +103,4 @@ Keep the MVP minimal and reuse one report schema. Exclude multi-dog management, 
 
 The adapter embeds PNG/JPEG/WebP bytes in order and checks file signatures, not complete image validity. Image order does not prove continuous motion. The configured model must support vision and Structured Outputs. The five flat AI strings are validated, then `DogReport.to_report_content()` nests observations/interpretation and initializes comparison to `null` and referenced IDs to `[]`; application ID/time are still required before persistence. This replaces the proposed `current` field without modifying the Epic 1 comparison implementation.
 
-Pending integration: RAG retrieval when situation is absent; historical matching/filtering; CLI image validation; application metadata and persistence. Offline fixtures verify transport and structure, not real model accuracy or target recognition. API formats follow OpenAI's [image input](https://developers.openai.com/api/docs/guides/images-vision?api-mode=responses) and [Structured Outputs](https://developers.openai.com/api/docs/guides/structured-outputs?api-mode=responses) documentation.
+Integrated entry point: `pawgress --dog` collects/reuses the profile, loads sourced RAG context (general references when no text matches), submits images, assigns UUID/UTC metadata, and passes the report to Comparison. Comparison filters history before selecting up to three newest matches, saves the complete report and returns it for CLI display. See [manual testing](../../epic2_manual_testing.md). Offline fixtures verify transport and structure, not real model accuracy or target recognition. API formats follow OpenAI's [image input](https://developers.openai.com/api/docs/guides/images-vision?api-mode=responses) and [Structured Outputs](https://developers.openai.com/api/docs/guides/structured-outputs?api-mode=responses) documentation.

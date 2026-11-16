@@ -1,6 +1,31 @@
 """Simple knowledge retrieval for the Pawgress MVP."""
 
 import re
+from pathlib import Path
+
+from pawgress.knowledge_base import load_knowledge_base
+
+REFERENCE_PATH = Path(__file__).with_name("data") / "canine_references.json"
+
+
+def retrieve_canine_knowledge(
+    situation: str | None, reference_path: Path = REFERENCE_PATH
+) -> list[dict[str, str]]:
+    """Use sourced references, including general context for image-only input."""
+    references = load_knowledge_base(reference_path)
+    if not references:
+        raise ValueError(
+            "Populate the canine knowledge base before generating reports."
+        )
+    matches = retrieve_context(situation or "", knowledge_base=references)
+    return [
+        {
+            "source": f"{entry['source_title']} ({entry['source_url']})",
+            "content": entry["text"],
+        }
+        for entry in matches or references
+    ]
+
 
 KNOWLEDGE_BASE = [
     {

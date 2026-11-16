@@ -23,7 +23,13 @@ DOG_INSTRUCTIONS = (
     "Use canine_knowledge for cautious interpretation, safety_assessment and "
     "recommendations; identify supplied sources when relying on them. Do not invent "
     "conditions, citations or diagnoses. Explain uncertainty and photographic "
-    "limitations. Do not generate history comparisons, report IDs or timestamps."
+    "limitations. Do not generate history comparisons, report IDs or timestamps. "
+    "Write a concise, owner-friendly report, aiming for 180-250 words across all "
+    "five fields. Use one sentence for scene_context, 2-3 for observations, 1-2 "
+    "each for interpretation and safety_assessment, and 2-3 brief actionable "
+    "recommendations. Avoid repeating facts, caveats or source citations across "
+    "sections. Retain source attribution, important safety concerns, uncertainty "
+    "and scene details needed for later comparison, even if extra words are needed."
 )
 
 
