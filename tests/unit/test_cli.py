@@ -1,12 +1,118 @@
 """Smoke tests for both installed CLI entry points."""
 
 import os
+import runpy
 import subprocess
 import sys
 import sysconfig
 from pathlib import Path
 
 import pytest
+
+import pawgress.cli as cli
+from pawgress.ai import AIGenerationError
+
+
+def test_main_prints_help(capsys: pytest.CaptureFixture[str]) -> None:
+    assert cli.main([]) == 0
+    output = capsys.readouterr()
+    assert "usage: pawgress" in output.out
+    assert output.err == ""
+
+
+def test_module_entry(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(sys, "argv", ["pawgress"])
+    with pytest.raises(SystemExit) as error:
+        runpy.run_module("pawgress", run_name="__main__")
+    assert error.value.code == 0
+
+
+@pytest.mark.parametrize("text", ["", "   "])
+def test_main_rejects_empty_text(text: str, capsys: pytest.CaptureFixture[str]) -> None:
+    with pytest.raises(SystemExit) as error:
+        cli.main([text])
+    assert error.value.code == 2
+    assert "No text provided." in capsys.readouterr().err
+
+
+def test_main_displays_valid_report(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    def fake_report(text: str) -> dict[str, str | None]:
+        assert text == "My dog barked."
+        return {
+            "observations": "The dog barked.",
+            "interpretation": "The dog may be excited.",
+            "comparison": "Consistent with earlier reports.",
+        }
+
+    monkeypatch.setattr(cli, "generate_report", fake_report)
+    assert cli.main([" My dog barked. "]) == 0
+    output = capsys.readouterr()
+    assert "Observations:\n\tThe dog barked.\n" in output.out
+    assert "Comparison:\n\tConsistent with earlier reports.\n" in output.out
+    assert output.err == ""
+
+
+@pytest.mark.parametrize(
+    ("report", "message"),
+    [
+        (None, "Report must be a dictionary."),
+        (
+            {"observations": "", "interpretation": "Valid", "comparison": None},
+            "Observations must contain a non-empty string.",
+        ),
+        (
+            {"observations": "Valid", "interpretation": " ", "comparison": None},
+            "Interpretation must contain a non-empty string.",
+        ),
+        (
+            {"observations": "Valid", "interpretation": "Valid"},
+            "Report must contain a 'comparison' field.",
+        ),
+        (
+            {"observations": "Valid", "interpretation": "Valid", "comparison": ""},
+            "Comparison must be a non-empty string or None.",
+        ),
+    ],
+)
+def test_main_reports_invalid_report(
+    report: object,
+    message: str,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    monkeypatch.setattr(cli, "generate_report", lambda text: report)
+    assert cli.main(["My dog barked."]) == 1
+    output = capsys.readouterr()
+    assert output.out == ""
+    assert f"Unable to display report: {message}" in output.err
+
+
+def test_main_reports_generation_error(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    def fail_generation(text: str) -> dict[str, str]:
+        raise AIGenerationError("Offline failure")
+
+    monkeypatch.setattr(cli, "generate_report", fail_generation)
+    assert cli.main(["My dog barked."]) == 1
+    assert capsys.readouterr().err == ("Unable to display report: Offline failure\n")
+
+
+def test_validate_report_accepts_no_comparison() -> None:
+    cli.validate_report(
+        {
+            "observations": "The dog barked.",
+            "interpretation": "The dog may be excited.",
+            "comparison": None,
+        }
+    )
+
+
+def test_display_report_without_comparison(capsys: pytest.CaptureFixture[str]) -> None:
+    cli.display_report("Observed barking.", "Uncertain.", None)
+    assert capsys.readouterr().out.endswith("Comparison:\n\tNot available.\n")
 
 
 @pytest.mark.parametrize(
