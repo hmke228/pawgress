@@ -75,8 +75,11 @@ def test_api_failures(status: int | None) -> None:
         max_retries=0,
         http_client=httpx.Client(transport=httpx.MockTransport(handle)),
     ) as client:
-        with pytest.raises(AIGenerationError, match="request failed"):
+        with pytest.raises(AIGenerationError, match="request failed") as error:
             OpenAIGenerator(client, "test-model").generate("A light blinks.", "Context")
+        if status is not None:
+            assert f"HTTP {status}" in str(error.value)
+            assert "Test failure" in str(error.value)
 
 
 @pytest.mark.parametrize(

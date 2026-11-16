@@ -58,7 +58,14 @@ class OpenAIGenerator:
                 timeout=30.0,
             )
         except APIError as error:
-            raise AIGenerationError("OpenAI request failed.") from error
+            status_code = getattr(error, "status_code", None)
+            status = f"HTTP {status_code}: " if status_code is not None else ""
+            request_id = getattr(error, "request_id", None)
+            request_id = f" (request ID: {request_id})" if request_id else ""
+            message = getattr(error, "message", None) or str(error)
+            raise AIGenerationError(
+                f"OpenAI request failed: {status}{message}{request_id}"
+            ) from error
         if response.status != "completed":
             raise AIGenerationError("OpenAI response was not completed.")
         if any(
