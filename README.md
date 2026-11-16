@@ -153,9 +153,9 @@ runs lint/format checks, unit tests with the coverage gate, and integration test
 - Work on separate `chore/`, `feat/`, or `fix/` branches; never commit directly to
   `main`. Merge through pull requests with at least one approval and CODEOWNERS review.
 - Each PR must have fewer than 300 changed lines, counting additions and deletions.
-  Keep PRs focused; an issue may have multiple PRs. Use `Refs #2`, `Refs #3`, or
-  `Refs #4`; close issues only after all acceptance criteria are met. Keep #5 open
-  for the team's requirements and MVP backlog decisions.
+  Keep PRs focused; an issue may have multiple PRs. Reference the related Epic
+  or Story issue with `Refs #<number>`; close issues only after all acceptance criteria
+  are met. Keep #5 open for the team's requirements and MVP backlog decisions.
 - Add tests with code changes. Unit line coverage must exceed 90% (91% gate).
   Cover public entry points with integration tests; include validation in PRs.
 - Use descriptive snake_case names, typed function signatures, and Ruff formatting
