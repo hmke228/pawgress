@@ -1,11 +1,15 @@
-"""Collect text and display the complete Epic 1 report."""
+"""CLI entry point for Epic 2 dog reports and the legacy text demonstration."""
 
 import argparse
+import sqlite3
 import sys
 from collections.abc import Sequence
+from pathlib import Path
 
 from pawgress.ai import AIGenerationError
+from pawgress.dog_cli import run_dog_cli
 from pawgress.pipeline import generate_report
+from pawgress.rag import REFERENCE_PATH
 
 
 def validate_report(report: object) -> None:
@@ -52,12 +56,40 @@ def main(argv: Sequence[str] | None = None) -> int:
     """Accept & validate command-line arguments and process the input text."""
     parser = argparse.ArgumentParser(
         prog="pawgress",
-        description="Pawgress Demo - This CLI accepts simple text input.",
+        description="Pawgress: dog behavior reports with images and comparable history.",
     )
     parser.add_argument(
         "text", nargs="?", help="Text to process must be enclosed in quotes."
     )
+    parser.add_argument(
+        "--dog", action="store_true", help="Run the Epic 2 dog workflow."
+    )
+    parser.add_argument(
+        "--db",
+        type=Path,
+        default=Path.home() / ".local/share/pawgress/pawgress.db",
+        help="SQLite file for one dog's profile and report history (--dog).",
+    )
+    parser.add_argument(
+        "--knowledge-base",
+        type=Path,
+        default=REFERENCE_PATH,
+        help="Sourced canine reference JSON file (--dog).",
+    )
     args = parser.parse_args(argv)
+
+    if args.dog:
+        if args.text is not None:
+            parser.error("Use --dog alone; enter the situation at the prompt.")
+        try:
+            run_dog_cli(args.db, args.knowledge_base)
+        except (ValueError, OSError, sqlite3.Error, AIGenerationError) as error:
+            print(f"Unable to generate dog report: {error}", file=sys.stderr)
+            return 1
+        except (EOFError, KeyboardInterrupt):
+            print("Dog report cancelled.", file=sys.stderr)
+            return 1
+        return 0
 
     if args.text is None:
         parser.print_help()

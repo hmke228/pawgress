@@ -35,8 +35,9 @@ pre-commit run --all-files
 
 - Never commit directly to `main`. Use separate `chore/`, `feat/`, or `fix/` branches
   and merge through reviewed PRs. Preserve existing work, CODEOWNERS, and settings.
-- Keep each PR under 100 changed lines (additions plus deletions). Use `Refs #2`,
-  `Refs #3`, or `Refs #4`; do not close issues before all requirements are complete.
+- Keep each PR under 300 changed lines (additions plus deletions). Reference the
+  related Epic or Story issue with `Refs #<number>`; do not close issues before all
+  requirements are complete.
 - Keep #5 open for team requirements and MVP backlog finalization.
 - Add tests with code changes; keep tests independent of network and external services.
 - Use descriptive snake_case names, typed signatures, and Ruff formatting/import order.

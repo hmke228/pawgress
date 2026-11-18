@@ -157,6 +157,8 @@ with OpenAI(max_retries=0, http_client=httpx.Client(transport=httpx.MockTranspor
     assert result.returncode == int(failed), result.stderr
     if failed:
         assert "OpenAI request failed." in result.stderr
+        assert "HTTP 500" in result.stderr
+        assert "Offline failure" in result.stderr
         assert result.stdout == ""
     else:
         assert "Observations:\n\t  The dog barked and jumped.  \n" in result.stdout

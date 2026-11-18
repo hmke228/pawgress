@@ -63,20 +63,36 @@ def test_response_handling(
             )
 
 
-@pytest.mark.parametrize("status", [401, 429, 500, None])
+@pytest.mark.parametrize("status", [400, 401, 403, 404, 429, 500, None])
 def test_api_failures(status: int | None) -> None:
     def handle(request: httpx.Request) -> httpx.Response:
         if status is None:
             raise httpx.ReadTimeout("Timed out", request=request)
-        return httpx.Response(status, json={"error": {"message": "Test failure"}})
+        return httpx.Response(
+            status,
+            json={"error": {"message": "Test failure", "code": "test_error"}},
+            headers={"x-request-id": "req_offline"},
+        )
 
     with OpenAI(
         api_key="offline-test",
         max_retries=0,
         http_client=httpx.Client(transport=httpx.MockTransport(handle)),
     ) as client:
-        with pytest.raises(AIGenerationError, match="request failed"):
+        with pytest.raises(AIGenerationError, match="request failed") as failure:
             OpenAIGenerator(client, "test-model").generate("A light blinks.", "Context")
+        details = str(failure.value)
+        assert "Report generation" in details
+        if status is None:
+            assert "APITimeoutError" in details
+        else:
+            for expected in (
+                f"HTTP {status}",
+                "Test failure",
+                "test_error",
+                "req_offline",
+            ):
+                assert expected in details
 
 
 @pytest.mark.parametrize(

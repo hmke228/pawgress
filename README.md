@@ -5,9 +5,12 @@ application helps owners understand one target dog's observable behaviors and
 compare observations over time. The existing team Project Plan defines the
 product requirements and architecture.
 
-The Epic 1 CLI connects text input, test-knowledge retrieval, AI generation, and
-deterministic comparison against one mock historical report. Images and the full
-MVP report schema remain future work.
+The Epic 2 CLI connects a saved dog profile, situation and images to sourced
+canine references, AI report generation and comparison with up to three relevant
+historical reports. Complete reports are saved in SQLite for later analyses.
+
+**New to Pawgress?** Start with [How to Use Pawgress](HOW_TO_USE.md) for installation,
+API configuration, your first report, and everyday usage.
 
 ## Development setup
 
@@ -35,21 +38,37 @@ pawgress --help
 python -m pawgress --help
 ```
 
-Both entry points also print help when called without arguments. To run the full
-text pipeline, activate `.venv`, set `OPENAI_API_KEY` securely in your environment,
-and set `OPENAI_MODEL` to your Structured Outputs-capable model ID. Then run:
+Both entry points print help when called without arguments. Activate `.venv`, set
+`OPENAI_API_KEY` securely in your environment, and set `OPENAI_MODEL` to a model
+supporting image input and Structured Outputs. Run the interactive dog workflow:
 
 ```sh
-pawgress "My dog barked, jumped, and had a tucked tail."
-python -m pawgress "My dog barked, jumped, and had a tucked tail."
+pawgress --dog
+python -m pawgress --dog
 ```
 
-Each invocation makes one live AI request. RAG supplies a string from the small
-test knowledge base; AI returns `observations` and `interpretation`. Comparison
-then compares the AI observations with one mock report ("The dog barked and stayed
-calm."). The CLI displays both AI fields unchanged plus the comparison summary.
-This pipeline does not read or write SQLite; the standalone database code remains
-available for later use. Tests mock HTTP responses and require no credentials.
+First use collects a name and description (appearance, basic details and behavioral
+background), a situation and at least one PNG/JPEG/WebP image. Enter image paths
+one at a time, then `done`. Later runs reuse the profile and allow an empty situation.
+Use identifying details to distinguish the target dog in multi-dog images.
+
+Comparison filters same or behaviorally comparable scenes before selecting the
+latest **up to three** matches. It never fills with unrelated reports. No matches
+means `comparison: null` and `referenced_report_ids: []`. AI fields are preserved.
+One API request generates the current report, a second filters existing history,
+and a third compares selected matches when any exist. Tests replace HTTP only.
+
+The default database is `~/.local/share/pawgress/pawgress.db`; use
+`--db /tmp/pawgress-test.db` for isolated testing. Each database holds one profile
+and immutable complete reports; image files are not copied into SQLite. The old
+standalone demo table is preserved separately, not imported into Epic 2 history.
+The bundled knowledge base currently contains one professional reference. When
+the situation is absent or has no keyword match, its general background is used.
+Use `--knowledge-base /path/to/references.json` for a reviewed expanded collection.
+
+See the [manual testing guide](docs/epic2_manual_testing.md) for secure key setup, first
+and later runs, inspecting saved JSON, and failure cases. The legacy
+`pawgress "text"` command remains an Epic 1 demonstration using mock history.
 
 ## Project layout and architecture
 
@@ -58,11 +77,16 @@ src/pawgress/
     __init__.py              Python package
     __main__.py              python -m pawgress entry point
     cli.py                   CLI entry point and help
+    cli_input.py             Situation and image-path collection
+    dog_cli.py               Profile reuse and final dog-report display
     ai.py                    AI response and generator contract
-    rag.py                   Test-knowledge retrieval and context formatting
-    behavioral_comparison.py Comparison logic and standalone SQLite demo
-    pipeline.py              Epic 1 text orchestration with mock history
-    storage.py               SQLite storage placeholder
+    dog_report.py            Vision request and dog-report content contracts
+    openai_generator.py      Structured OpenAI generation
+    rag.py                   Sourced knowledge retrieval and context formatting
+    knowledge_base.py        Reference validation and loading
+    behavioral_comparison.py History filtering, comparison and standalone demo
+    pipeline.py              Epic 2 orchestration and legacy Epic 1 text pipeline
+    storage.py               SQLite profile and complete-report persistence
 tests/unit/                  Direct unit tests and component import tests
 tests/integration/           CLI subprocess smoke tests
 scripts/lint.sh              Ruff lint and format checks
@@ -72,9 +96,9 @@ The Project Plan's four main components are CLI, AI Report Generation, RAG, and
 Behavioral Comparison. Storage is a supporting module: the team has selected
 **SQLite**, using Python's built-in `sqlite3` module. The comparison component has
 a standalone database prototype; the integrated Epic 1 pipeline uses mock history.
-Production storage interfaces remain future work.
+The integrated Epic 2 pipeline uses the supporting `ReportStore` for persistence.
 
-Epic 1 AI generation uses OpenAI behind the provider-independent `AIGenerator`
+AI generation uses OpenAI; Epic 1 retains its provider-independent `AIGenerator`
 interface. Keep the setup lightweight and follow the existing Project Plan;
 changes to requirements or architecture need team approval.
 
@@ -128,10 +152,10 @@ runs lint/format checks, unit tests with the coverage gate, and integration test
 
 - Work on separate `chore/`, `feat/`, or `fix/` branches; never commit directly to
   `main`. Merge through pull requests with at least one approval and CODEOWNERS review.
-- Each PR must have fewer than 100 changed lines, counting additions and deletions.
-  Keep PRs focused; an issue may have multiple PRs. Use `Refs #2`, `Refs #3`, or
-  `Refs #4`; close issues only after all acceptance criteria are met. Keep #5 open
-  for the team's requirements and MVP backlog decisions.
+- Each PR must have fewer than 300 changed lines, counting additions and deletions.
+  Keep PRs focused; an issue may have multiple PRs. Reference the related Epic
+  or Story issue with `Refs #<number>`; close issues only after all acceptance criteria
+  are met. Keep #5 open for the team's requirements and MVP backlog decisions.
 - Add tests with code changes. Unit line coverage must exceed 90% (91% gate).
   Cover public entry points with integration tests; include validation in PRs.
 - Use descriptive snake_case names, typed function signatures, and Ruff formatting

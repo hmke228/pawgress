@@ -63,6 +63,8 @@ def test_generate_dog_report(
             base64.b64decode(part["image_url"].split(",")[1]) for part in content[1:]
         ] == [p.read_bytes() for p in request_data.image_paths]
         assert body["store"] is False
+        assert "180-250 words across all" in body["instructions"]
+        assert "important safety concerns" in body["instructions"]
         schema = body["text"]["format"]
         assert schema["strict"] is True
         assert set(schema["schema"]["required"]) == set(REPORT)
