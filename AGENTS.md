@@ -38,7 +38,8 @@ pre-commit run --all-files
 - Keep each PR under 300 changed lines (additions plus deletions). Reference the
   related Epic or Story issue with `Refs #<number>`; do not close issues before all
   requirements are complete.
-- Keep #5 open for team requirements and MVP backlog finalization.
+- Issue #5 is closed; use the existing team Project Plan and Epic/Story issues
+  for ongoing requirements and backlog tracking.
 - Add tests with code changes; keep tests independent of network and external services.
 - Use descriptive snake_case names, typed signatures, and Ruff formatting/import order.
 - Never commit secrets, credentials, or generated data. Review and understand AI work;

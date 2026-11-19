@@ -21,6 +21,16 @@ INSTRUCTIONS = (
 )
 
 
+def _unique_json_object(pairs: list[tuple[str, object]]) -> dict[str, object]:
+    """Reject ambiguous responses instead of silently keeping the last value."""
+    result = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError("Duplicate JSON field")
+        result[key] = value
+    return result
+
+
 @dataclass
 class OpenAIGenerator:
     """Use a caller-owned SDK client and a Structured Outputs-capable model."""
@@ -87,10 +97,16 @@ class OpenAIGenerator:
         ):
             raise AIGenerationError("OpenAI refused the request.")
         try:
-            return response_type(**json.loads(response.output_text))
+            return response_type(
+                **json.loads(
+                    response.output_text, object_pairs_hook=_unique_json_object
+                )
+            )
         except (TypeError, ValueError) as error:
             raise AIGenerationError(
-                "OpenAI returned an invalid AI response."
+                "OpenAI returned an invalid AI response. "
+                "Expected each required text field exactly once with a nonblank "
+                "string and no extra fields. Retry report generation."
             ) from error
 
 
