@@ -3,6 +3,7 @@
 from pathlib import Path
 
 import pytest
+from PIL import Image
 
 from pawgress.cli_input import (
     collect_image_paths,
@@ -81,8 +82,9 @@ def test_image_paths_preserve_order(
 ) -> None:
     first = tmp_path / "first photo.jpg"
     second = tmp_path / "second.jpg"
-    first.write_bytes(b"test fixture")
-    second.write_bytes(b"test fixture")
+    with Image.new("RGB", (8, 8), color="blue") as image:
+        image.save(first, format="JPEG")
+        image.save(second, format="JPEG")
 
     responses = iter([str(second), str(first), "done"])
     monkeypatch.setattr("builtins.input", lambda _: next(responses))
@@ -99,7 +101,8 @@ def test_image_paths_reject_missing_file(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     valid_file = tmp_path / "photo.jpg"
-    valid_file.write_bytes(b"test fixture")
+    with Image.new("RGB", (8, 8), color="blue") as image:
+        image.save(valid_file, format="JPEG")
 
     responses = iter(
         [
@@ -120,7 +123,8 @@ def test_image_paths_reject_duplicates(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     valid_file = tmp_path / "photo.jpg"
-    valid_file.write_bytes(b"test fixture")
+    with Image.new("RGB", (8, 8), color="blue") as image:
+        image.save(valid_file, format="JPEG")
 
     responses = iter([str(valid_file), str(valid_file), "done"])
     monkeypatch.setattr("builtins.input", lambda _: next(responses))
@@ -136,8 +140,9 @@ def test_image_paths_require_minimum_count(
 ) -> None:
     first = tmp_path / "first.jpg"
     second = tmp_path / "second.jpg"
-    first.write_bytes(b"test fixture")
-    second.write_bytes(b"test fixture")
+    with Image.new("RGB", (8, 8), color="blue") as image:
+        image.save(first, format="JPEG")
+        image.save(second, format="JPEG")
 
     responses = iter([str(first), "done", str(second), "done"])
     monkeypatch.setattr("builtins.input", lambda _: next(responses))
@@ -155,7 +160,8 @@ def test_image_paths_reject_blank_and_directory(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     valid_file = tmp_path / "photo.jpg"
-    valid_file.write_bytes(b"test fixture")
+    with Image.new("RGB", (8, 8), color="blue") as image:
+        image.save(valid_file, format="JPEG")
 
     responses = iter(["   ", str(tmp_path), str(valid_file), "done"])
     monkeypatch.setattr("builtins.input", lambda _: next(responses))
@@ -187,7 +193,8 @@ def test_image_paths_retry_expansion_failure(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     valid_file = tmp_path / "photo.jpg"
-    valid_file.write_bytes(b"test fixture")
+    with Image.new("RGB", (8, 8), color="blue") as image:
+        image.save(valid_file, format="JPEG")
     original_expanduser = Path.expanduser
 
     def fake_expanduser(path: Path) -> Path:
@@ -203,3 +210,37 @@ def test_image_paths_retry_expansion_failure(
     assert (
         "The provided file could not be read. Please check the path and permissions."
     ) in capsys.readouterr().out
+
+
+def test_image_paths_retry_invalid_image(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    first = tmp_path / "first.jpg"
+    corrupt = tmp_path / "corrupt.png"
+    replacement = tmp_path / "replacement.jpg"
+
+    with Image.new("RGB", (8, 8), color="blue") as image:
+        image.save(first, format="JPEG")
+        image.save(replacement, format="JPEG")
+    corrupt.write_bytes(b"\x89PNG\r\n\x1a\n")
+
+    responses = iter(
+        [
+            str(first),
+            str(corrupt),
+            str(replacement),
+            "done",
+        ]
+    )
+    monkeypatch.setattr("builtins.input", lambda _: next(responses))
+
+    assert collect_image_paths(minimum_count=2) == [
+        str(first.resolve()),
+        str(replacement.resolve()),
+    ]
+
+    output = capsys.readouterr()
+    assert f"Invalid image '{corrupt}':" in output.out
+    assert "could not be read or decoded" in output.out

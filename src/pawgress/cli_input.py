@@ -1,6 +1,8 @@
-"""Collect owner-provided input for the Epic 2 workflow."""
+"""Collect owner-provided ordered paths to readable, supported, decodable images."""
 
 from pathlib import Path
+
+from pawgress.image_validation import validate_image
 
 
 def prompt_required_text(prompt: str) -> str:
@@ -54,9 +56,6 @@ def collect_image_paths(*, minimum_count: int) -> list[str]:
                 print("The provided path does not point to a file.")
                 continue
 
-            with path.open("rb") as image_file:
-                image_file.read(1)
-
             resolved_path = str(path.resolve())
         except (OSError, ValueError, RuntimeError):
             print(
@@ -66,6 +65,12 @@ def collect_image_paths(*, minimum_count: int) -> list[str]:
 
         if resolved_path in image_paths:
             print("The provided file has already been added.")
+            continue
+
+        try:
+            validate_image(Path(resolved_path))
+        except ValueError as error:
+            print(f"Invalid image '{entered_path}': {error}")
             continue
 
         image_paths.append(resolved_path)

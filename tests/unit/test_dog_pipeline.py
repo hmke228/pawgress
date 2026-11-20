@@ -10,6 +10,7 @@ from unittest.mock import patch
 import httpx
 import pytest
 from openai import OpenAI
+from PIL import Image
 
 from pawgress.ai import AIGenerationError
 from pawgress.behavioral_comparison import complete_dog_report
@@ -56,8 +57,11 @@ def store(tmp_path: Path) -> ReportStore:
 @pytest.fixture
 def images(tmp_path: Path) -> list[str]:
     paths = [tmp_path / "one.png", tmp_path / "two.jpg"]
-    for path, content in zip(paths, [b"\x89PNG\r\n\x1a\n", b"\xff\xd8\xff"]):
-        path.write_bytes(content)  # Transport fixtures, not valid photograph fixtures.
+
+    with Image.new("RGB", (8, 8), color="blue") as picture:
+        picture.save(paths[0], format="PNG")
+        picture.save(paths[1], format="JPEG")
+
     return [str(path) for path in paths]
 
 

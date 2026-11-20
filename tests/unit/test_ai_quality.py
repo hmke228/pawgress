@@ -6,6 +6,7 @@ from pathlib import Path
 import httpx
 import pytest
 from openai import OpenAI
+from PIL import Image
 
 from pawgress.cli import main
 from pawgress.pipeline import generate_dog_report
@@ -49,7 +50,8 @@ def quality_setup(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> tuple:
     monkeypatch.setenv("OPENAI_API_KEY", "offline-test")
     monkeypatch.setenv("OPENAI_MODEL", "test-model")
     image = tmp_path / "dog.png"
-    image.write_bytes(b"\x89PNG\r\n\x1a\n")  # Transport only; not a real photograph.
+    with Image.new("RGB", (8, 8), color="blue") as picture:
+        picture.save(image, format="PNG")
     store = ReportStore(tmp_path / "reports.db")
     store.save_profile(PROFILE)
     replies, requests = [], []
