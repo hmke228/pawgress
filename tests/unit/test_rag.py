@@ -1,11 +1,15 @@
 """Unit tests for RAG knowledge retrieval."""
 
+from pathlib import Path
+
 import pytest
 
 from pawgress.rag import (
+    KnowledgeRetrievalError,
     build_rag_context,
     extract_keywords,
     format_context,
+    retrieve_canine_knowledge,
     retrieve_context,
 )
 
@@ -174,3 +178,20 @@ def test_build_rag_context_with_professional_reference():
     assert "A tucked tail may indicate fear or discomfort." in context
     assert "Source: Example Source" in context
     assert "https://example.com/reference" in context
+
+
+@pytest.mark.parametrize(
+    "contents",
+    [None, "not valid JSON", "[]"],
+    ids=["missing-file", "invalid-json", "empty-knowledge"],
+)
+def test_reference_failure_is_identified(
+    tmp_path: Path,
+    contents: str | None,
+) -> None:
+    reference_path = tmp_path / "references.json"
+    if contents is not None:
+        reference_path.write_text(contents, encoding="utf-8")
+
+    with pytest.raises(KnowledgeRetrievalError):
+        retrieve_canine_knowledge("Another dog approached.", reference_path)

@@ -9,7 +9,7 @@ from pathlib import Path
 from pawgress.ai import AIGenerationError
 from pawgress.dog_cli import run_dog_cli
 from pawgress.pipeline import generate_report
-from pawgress.rag import REFERENCE_PATH
+from pawgress.rag import REFERENCE_PATH, KnowledgeRetrievalError
 
 
 def validate_report(report: object) -> None:
@@ -83,7 +83,35 @@ def main(argv: Sequence[str] | None = None) -> int:
             parser.error("Use --dog alone; enter the situation at the prompt.")
         try:
             run_dog_cli(args.db, args.knowledge_base)
-        except (ValueError, OSError, sqlite3.Error, AIGenerationError) as error:
+        except sqlite3.Error as error:
+            print(
+                f"Unable to access or save report data: {error}\n"
+                "Check that the database location is writable. If the database is "
+                "locked, close other Pawgress processes using it and try again. "
+                "Keep the same --db path to retain your profile and history.",
+                file=sys.stderr,
+            )
+            return 1
+        except KnowledgeRetrievalError as error:
+            print(
+                f"Unable to retrieve canine references: {error}\n"
+                "Check the --knowledge-base path and file permissions. "
+                "Use a non-empty, validated reference JSON file; ask the "
+                "team to repair invalid reference data before retrying.",
+                file=sys.stderr,
+            )
+            return 1
+        except AIGenerationError as error:
+            print(
+                f"Unable to generate dog report: {error}\n"
+                "Check the reported cause before retrying: API configuration "
+                "or access, quota/rate limits, connection, or an invalid response. "
+                "If the problem persists, share the error and request ID with "
+                "the team, but never your API key.",
+                file=sys.stderr,
+            )
+            return 1
+        except (ValueError, OSError) as error:
             print(f"Unable to generate dog report: {error}", file=sys.stderr)
             return 1
         except (EOFError, KeyboardInterrupt):
