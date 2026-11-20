@@ -9,6 +9,7 @@ from contextlib import closing
 from pathlib import Path
 
 import pytest
+from PIL import Image
 
 SCRIPT = r"""
 import json
@@ -31,6 +32,9 @@ fields = {
     "recommendations": "Allow space and observe.",
 }
 def handle(request):
+    if fail == "forbid":
+        raise AssertionError("Unexpected API request for invalid image input.")
+
     body = json.loads(request.content)
     if body["text"]["format"]["name"] == "ai_response":
         content = body["input"][0]["content"]
@@ -68,7 +72,8 @@ with OpenAI(max_retries=0, http_client=httpx.Client(transport=httpx.MockTranspor
 def test_dog_workflow_across_processes(entry: str, tmp_path: Path) -> None:
     database = tmp_path / "reports.db"
     image = tmp_path / "dog.png"
-    image.write_bytes(b"\x89PNG\r\n\x1a\n")
+    with Image.new("RGB", (8, 8), color="blue") as picture:
+        picture.save(image, format="PNG")
     reports = []
     for attempt in range(6):
         # Last attempt fails during comparison and must not leave a partial report.
@@ -127,3 +132,53 @@ def test_dog_workflow_across_processes(entry: str, tmp_path: Path) -> None:
         )
         assert result.stderr == ""
         reports = saved
+
+
+@pytest.mark.parametrize(
+    "entry",
+    ["pawgress", str(Path(sysconfig.get_path("scripts")) / "pawgress")],
+)
+def test_invalid_image_makes_no_api_request(
+    entry: str,
+    tmp_path: Path,
+) -> None:
+    database = tmp_path / "reports.db"
+    image = tmp_path / "corrupt.png"
+    image.write_bytes(b"\x89PNG\r\n\x1a\n")  # Invalid PNG
+
+    answers = [
+        "Promise",
+        "Golden dog; usually playful.",
+        "Another dog approached.",
+        str(image),
+        "done",
+    ]
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            SCRIPT,
+            entry,
+            str(database),
+            "forbid",
+        ],
+        input="\n".join(answers) + "\n",
+        cwd=tmp_path,
+        capture_output=True,
+        text=True,
+        timeout=15,
+        check=False,
+    )
+
+    assert result.returncode == 1, result.stderr
+    assert f"Invalid image '{image}':" in result.stdout
+    assert "could not be read or decoded" in result.stdout
+    assert "Please provide at least 1 image file(s)." in result.stdout
+    assert "Dog report cancelled." in result.stderr
+    assert "Traceback" not in result.stderr
+    assert "Unexpected API request" not in result.stderr
+    assert "Pawgress Dog Report" not in result.stdout
+
+    with closing(sqlite3.connect(database)) as connection:
+        count = connection.execute("SELECT COUNT(*) FROM dog_reports").fetchone()[0]
+    assert count == 0

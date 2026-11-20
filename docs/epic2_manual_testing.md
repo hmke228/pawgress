@@ -47,8 +47,10 @@ Respond to the prompts:
 5. **Target dog:** If several dogs appear, identify yours. Example:
    `The golden dog wearing a red collar`. You may press Enter to skip this prompt.
 
-Use actual PNG, JPEG, or WebP images. HEIC input is not supported. Local validation
-checks file signatures only; the API performs image decoding.
+Use actual PNG, JPEG, or WebP images. HEIC input is not supported.
+The CLI checks the detected image format, verifies file structure, and
+attempts to decode pixel data before analysis. Invalid images produce
+an error and can be replaced without losing previously accepted paths.
 The output should include Scene, Safety Assessment, Behavioral Observations,
 Interpretation, Comparison, and Recommendations.
 The first report should show `No comparable history available.` and
