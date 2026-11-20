@@ -1,12 +1,17 @@
 """Smoke tests for both installed CLI entry points."""
 
 import os
+import sqlite3
 import subprocess
 import sys
 import sysconfig
 from pathlib import Path
 
 import pytest
+
+import pawgress.cli as cli
+from pawgress.ai import AIGenerationError
+from pawgress.rag import KnowledgeRetrievalError
 
 
 @pytest.mark.parametrize(
@@ -169,3 +174,61 @@ with OpenAI(max_retries=0, http_client=httpx.Client(transport=httpx.MockTranspor
         assert "Newly observed behaviors include jumping." in result.stdout
         assert "include relaxed posture." in result.stdout
         assert result.stderr == ""
+
+
+def test_storage_failure_shows_recovery_steps(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    def fail_storage(*args, **kwargs) -> None:
+        raise sqlite3.OperationalError("database is locked")
+
+    monkeypatch.setattr(cli, "run_dog_cli", fail_storage)
+
+    assert cli.main(["--dog"]) == 1
+
+    output = capsys.readouterr()
+    assert output.out == ""
+    assert "database is locked" in output.err
+    assert "close other Pawgress processes" in output.err
+    assert "Keep the same --db path" in output.err
+    assert "Traceback" not in output.err
+
+
+def test_reference_failure_shows_recovery_steps(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    def fail_retrieval(*args, **kwargs) -> None:
+        raise KnowledgeRetrievalError("Reference file is missing.")
+
+    monkeypatch.setattr(cli, "run_dog_cli", fail_retrieval)
+
+    assert cli.main(["--dog"]) == 1
+
+    output = capsys.readouterr()
+    assert output.out == ""
+    assert "Unable to retrieve canine references" in output.err
+    assert "Reference file is missing." in output.err
+    assert "--knowledge-base" in output.err
+    assert "file permissions" in output.err
+    assert "Traceback" not in output.err
+
+
+def test_generation_failure_shows_recovery_steps(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    def fail_generation(*args, **kwargs) -> None:
+        raise AIGenerationError("HTTP 429; quota exhausted; request ID: req_test")
+
+    monkeypatch.setattr(cli, "run_dog_cli", fail_generation)
+
+    assert cli.main(["--dog"]) == 1
+
+    output = capsys.readouterr()
+    assert output.out == ""
+    assert "HTTP 429; quota exhausted; request ID: req_test" in output.err
+    assert "Check the reported cause before retrying" in output.err
+    assert "never your API key" in output.err
+    assert "Traceback" not in output.err

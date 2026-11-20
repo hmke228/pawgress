@@ -8,13 +8,23 @@ from pawgress.knowledge_base import load_knowledge_base
 REFERENCE_PATH = Path(__file__).with_name("data") / "canine_references.json"
 
 
+class KnowledgeRetrievalError(ValueError):
+    """Professional reference data could not be loaded or used."""
+
+
 def retrieve_canine_knowledge(
     situation: str | None, reference_path: Path = REFERENCE_PATH
 ) -> list[dict[str, str]]:
     """Use sourced references, including general context for image-only input."""
-    references = load_knowledge_base(reference_path)
+    try:
+        references = load_knowledge_base(reference_path)
+    except (OSError, ValueError) as error:
+        raise KnowledgeRetrievalError(
+            f"Unable to load canine references from '{reference_path}': {error}"
+        ) from error
+
     if not references:
-        raise ValueError(
+        raise KnowledgeRetrievalError(
             "Populate the canine knowledge base before generating reports."
         )
     matches = retrieve_context(situation or "", knowledge_base=references)
