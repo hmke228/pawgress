@@ -57,12 +57,31 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="pawgress",
         description="Pawgress: dog behavior reports with images and comparable history.",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""Examples:
+  pawgress --dog
+      First report: create a dog profile, describe the situation,
+      and provide image paths.
+
+  pawgress --dog
+      Later reports: reuse the saved profile and provide new images.
+      Press Enter to skip the situation description.
+
+  pawgress --dog --db ./reports.db
+      Use a specific database. Reuse the same path for later reports.
+
+Images:
+  Provide PNG, JPEG, or WebP image paths, one per prompt.
+  Enter 'done' when finished. HEIC images must be converted first.
+""",
     )
     parser.add_argument(
         "text", nargs="?", help="Text to process must be enclosed in quotes."
     )
     parser.add_argument(
-        "--dog", action="store_true", help="Run the Epic 2 dog workflow."
+        "--dog",
+        action="store_true",
+        help="Create a dog report using a saved or newly collected profile.",
     )
     parser.add_argument(
         "--db",
