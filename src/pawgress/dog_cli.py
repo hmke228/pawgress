@@ -2,6 +2,7 @@
 
 import os
 from pathlib import Path
+from textwrap import indent
 
 from pawgress.ai import AIGenerationError
 from pawgress.cli_input import (
@@ -12,6 +13,37 @@ from pawgress.cli_input import (
 )
 from pawgress.pipeline import generate_dog_report
 from pawgress.storage import ReportStore
+
+
+def display_dog_report(report: dict, database: Path) -> None:
+    """Display all three report sections, with behavioral details grouped together."""
+    behavior = report["behavioral_observations"]
+    comparison = behavior["comparison"]
+    if comparison is None:
+        comparison = "No comparable history available."
+
+    print(f"\nPawgress Dog Report — {report['report_id']}")
+    print(f"Created: {report['created_at']}")
+    print(f"Scene: {report['scene_context']}")
+
+    print("\n1. Safety Assessment")
+    print(report["safety_assessment"])
+
+    print("\n2. Behavioral Observations")
+    for heading, content in (
+        ("Observations", behavior["observations"]),
+        ("Interpretation", behavior["interpretation"]),
+        ("Comparison", comparison),
+    ):
+        print(f"\n  {heading}:")
+        print(indent(content, "    "))
+
+    print("\n3. Recommendations")
+    print(report["recommendations"])
+
+    references = ", ".join(report["referenced_report_ids"]) or "None"
+    print(f"\nReferenced reports: {references}")
+    print(f"Report saved to: {database}")
 
 
 def run_dog_cli(database: Path, reference_path: Path) -> None:
@@ -41,22 +73,4 @@ def run_dog_cli(database: Path, reference_path: Path) -> None:
     report = generate_dog_report(
         profile, image_paths, situation, target_hint, store, reference_path
     )
-    observations = report["behavioral_observations"]
-    print(f"\nPawgress Dog Report — {report['report_id']}")
-    print(f"Created: {report['created_at']}\nScene: {report['scene_context']}")
-    for heading, content in (
-        ("Safety Assessment", report["safety_assessment"]),
-        ("Behavioral Observations", observations["observations"]),
-        ("Interpretation", observations["interpretation"]),
-        (
-            "Comparison",
-            observations["comparison"] or "No comparable history available.",
-        ),
-        ("Recommendations", report["recommendations"]),
-    ):
-        print(f"\n{heading}:\n{content}")
-    print(
-        "\nReferenced reports: "
-        + (", ".join(report["referenced_report_ids"]) or "None")
-    )
-    print(f"Report saved to: {store.path}")
+    display_dog_report(report, store.path)

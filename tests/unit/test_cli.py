@@ -251,3 +251,21 @@ def test_main_rejects_invalid_report(
     assert output.err == (
         "Unable to display report: Observations must contain a non-empty string.\n"
     )
+
+
+def test_help_explains_dog_workflow(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    with pytest.raises(SystemExit) as error:
+        main(["--help"])
+
+    assert error.value.code == 0
+    output = capsys.readouterr()
+
+    assert "First report: create a dog profile" in output.out
+    assert "Later reports: reuse the saved profile" in output.out
+    assert "Press Enter to skip the situation description." in output.out
+    assert "Reuse the same path for later reports." in output.out
+    assert "PNG, JPEG, or WebP" in output.out
+    assert "Enter 'done' when finished." in output.out
+    assert output.err == ""
