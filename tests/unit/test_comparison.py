@@ -65,10 +65,10 @@ def test_initialize_database_creates_reports_table(database_path: Path):
     assert table == ("reports",)
 
 
-def test_save_and_get_previous_reports_filters_orders_and_limits(
+def test_save_and_get_previous_reports_filters_orders_and_supports_limits(
     database_path: Path,
 ):
-    """Previous reports are filtered by dog, ordered newest-first, and limited."""
+    """Previous reports are filtered and ordered, with an optional result limit."""
     engine.initialize_database()
     for report_id, dog_name, created_at in [
         ("oldest", "Milo", "2026-01-01"),
@@ -93,8 +93,8 @@ def test_save_and_get_previous_reports_filters_orders_and_limits(
     }
 
 
-def test_get_previous_reports_defaults_to_ten(database_path: Path):
-    """The app retrieves up to ten recent reports for the model to select from."""
+def test_get_previous_reports_includes_older_history_by_default(database_path: Path):
+    """Older reports remain eligible even when newer unrelated records exist."""
     engine.initialize_database()
     for index in range(12):
         engine.save_report(
@@ -107,7 +107,7 @@ def test_get_previous_reports_defaults_to_ten(database_path: Path):
 
     reports = engine.get_previous_reports("Milo", "current")
 
-    assert len(reports) == 10
+    assert len(reports) == 12
     assert reports[0]["report_id"] == "11"
 
 
@@ -140,12 +140,12 @@ def test_compare_reports_returns_baseline_without_history(
     }
 
 
-def test_compare_reports_uses_one_model_selected_report(
+def test_compare_reports_uses_only_model_selected_reports(
     monkeypatch: pytest.MonkeyPatch,
 ):
-    """Only the model-selected similar-scene report is referenced."""
+    """Only selected, comparable reports are referenced, up to three."""
     categories = {
-        "selected_report_id": "park-report",
+        "selected_report_ids": ["park-report", "trail-report", "yard-report"],
         "consistent": ["barking"],
         "new": ["jumping"],
         "previously_observed_not_mentioned": ["relaxed posture"],
@@ -158,6 +158,8 @@ def test_compare_reports_uses_one_model_selected_report(
         [
             report("park-report", "The dog barked and stayed relaxed.", "park"),
             report("home-report", "The dog played with a toy.", "home"),
+            report("trail-report", "The dog barked while walking.", "trail"),
+            report("yard-report", "The dog barked outdoors.", "yard"),
         ],
         scene_context="park",
     )
@@ -168,7 +170,7 @@ def test_compare_reports_uses_one_model_selected_report(
             "include jumping. Previously observed behaviors not mentioned in the "
             "current report include relaxed posture."
         ),
-        "referenced_report_ids": ["park-report"],
+        "referenced_report_ids": ["park-report", "trail-report", "yard-report"],
     }
     assert result["comparison_summary"].count(".") <= 2
     request_input = json.loads(requests[0]["input"])
@@ -178,9 +180,50 @@ def test_compare_reports_uses_one_model_selected_report(
     ] == [
         "park-report",
         "home-report",
+        "trail-report",
+        "yard-report",
     ]
-    assert "only with that selected report" in requests[0]["instructions"]
+    selection_schema = requests[0]["text"]["format"]["schema"]["properties"][
+        "selected_report_ids"
+    ]
+    assert selection_schema["maxItems"] == 3
+    assert selection_schema["items"]["enum"] == [
+        "park-report",
+        "home-report",
+        "trail-report",
+        "yard-report",
+    ]
+    assert "do not select reports just to reach three" in requests[0]["instructions"]
     assert "diagnoses" in requests[0]["instructions"]
+
+
+def test_compare_reports_does_not_fill_three_with_unrelated_reports(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    """One selected match stays one; unrelated candidates are not added."""
+    patch_openai(
+        monkeypatch,
+        json.dumps(
+            {
+                "selected_report_ids": ["park-report"],
+                "consistent": ["barking"],
+                "new": [],
+                "previously_observed_not_mentioned": [],
+            }
+        ),
+    )
+
+    result = engine.compare_reports(
+        "The dog barked.",
+        [
+            report("park-report", "The dog barked.", "park"),
+            report("home-report", "The dog played.", "home"),
+            report("clinic-report", "The dog rested.", "clinic"),
+        ],
+        scene_context="park",
+    )
+
+    assert result["referenced_report_ids"] == ["park-report"]
 
 
 def test_compare_reports_returns_baseline_when_no_similar_scene_is_selected(
@@ -191,7 +234,7 @@ def test_compare_reports_returns_baseline_when_no_similar_scene_is_selected(
         monkeypatch,
         json.dumps(
             {
-                "selected_report_id": None,
+                "selected_report_ids": [],
                 "consistent": [],
                 "new": [],
                 "previously_observed_not_mentioned": [],
@@ -230,7 +273,7 @@ def test_compare_reports_rejects_unknown_selected_report(
         monkeypatch,
         json.dumps(
             {
-                "selected_report_id": "unknown",
+                "selected_report_ids": ["unknown"],
                 "consistent": [],
                 "new": [],
                 "previously_observed_not_mentioned": [],
@@ -265,7 +308,7 @@ def test_process_report_saves_reports_and_compares_with_history(
         monkeypatch,
         json.dumps(
             {
-                "selected_report_id": "report-1",
+                "selected_report_ids": ["report-1"],
                 "consistent": ["barking"],
                 "new": ["jumping"],
                 "previously_observed_not_mentioned": [],
@@ -313,6 +356,66 @@ def test_process_report_saves_reports_and_compares_with_history(
             "The dog barked and jumped.",
         ),
     ]
+
+
+def test_process_report_selects_older_matches_without_filling_with_newer_history(
+    database_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    """All history reaches selection, but only selected matches are referenced."""
+    engine.initialize_database()
+    for index in range(12):
+        engine.save_report(
+            f"unrelated-{index}",
+            "Milo",
+            f"2026-02-{index + 1:02}",
+            "home",
+            "The dog played with a toy.",
+        )
+    for report_id, scene_context in [
+        ("older-park", "park"),
+        ("older-trail", "trail"),
+        ("older-clinic", "clinic"),
+    ]:
+        engine.save_report(
+            report_id,
+            "Milo",
+            f"2026-01-{len(report_id):02}",
+            scene_context,
+            "The dog barked.",
+        )
+
+    monkeypatch.setattr(engine, "uuid4", lambda: "current")
+    monkeypatch.setattr(
+        engine,
+        "datetime",
+        SimpleNamespace(now=lambda: DateTime(2026, 3, 1)),
+    )
+    requests = []
+    patch_openai(
+        monkeypatch,
+        json.dumps(
+            {
+                "selected_report_ids": ["older-park", "older-trail"],
+                "consistent": ["barking"],
+                "new": [],
+                "previously_observed_not_mentioned": [],
+            }
+        ),
+        requests,
+    )
+
+    result = engine.process_report("Milo", "park", "The dog barked.")
+
+    submitted = json.loads(requests[0]["input"])["candidate_previous_reports"]
+    assert len(submitted) == 15
+    assert {item["report_id"] for item in submitted} == {
+        *(f"unrelated-{index}" for index in range(12)),
+        "older-park",
+        "older-trail",
+        "older-clinic",
+    }
+    assert set(result["referenced_report_ids"]) == {"older-park", "older-trail"}
+    assert len(result["referenced_report_ids"]) <= 3
 
 
 def test_main_uses_command_line_arguments_without_prompting(
