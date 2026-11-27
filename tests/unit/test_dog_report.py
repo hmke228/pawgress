@@ -104,7 +104,6 @@ def test_generate_dog_report(
     "field,value,error",
     [
         ("dog_profile", {"name": "Promise"}, ValueError),
-        ("canine_knowledge", [], ValueError),
         ("canine_knowledge", [{"source": "", "content": "Text"}], ValueError),
         ("situation", 42, TypeError),
         ("target_hint", None, TypeError),
@@ -118,6 +117,15 @@ def test_invalid_input_before_request(
     setattr(request_data, field, value)
     with pytest.raises(error):
         request_data.to_input()
+
+
+def test_empty_knowledge_is_allowed(request_data: DogReportInput) -> None:
+    """Allow AI input when RAG finds no relevant references."""
+    request_data.canine_knowledge = []
+
+    result = request_data.to_input()
+
+    assert result[0]["role"] == "user"
 
 
 @pytest.mark.parametrize("data", [b"not an image", b""])

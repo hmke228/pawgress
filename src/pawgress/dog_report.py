@@ -22,8 +22,11 @@ DOG_INSTRUCTIONS = (
     "continuous motion; do not infer barking, duration or frequency from stills. "
     "Use canine_knowledge for cautious interpretation, safety_assessment and "
     "recommendations; identify supplied sources when relying on them. Do not invent "
-    "conditions, citations or diagnoses. Explain uncertainty and photographic "
-    "limitations. Do not generate history comparisons, report IDs or timestamps. "
+    "conditions, citations or diagnoses. "
+    "If canine_knowledge is empty, do not invent sources or imply that a "
+    "professional reference supports the assessment. "
+    "Explain uncertainty and photographic limitations. Do not generate history "
+    "comparisons, report IDs or timestamps. "
     "When situation is absent or blank, describe only visible current context; "
     "do not reuse profile background as an account of this event. If owner "
     "descriptions conflict with images, report both with their provenance and "
@@ -81,10 +84,13 @@ class DogReportInput:
         required_text = [self.dog_profile.get(key) for key in ("name", "description")]
         for reference in self.canine_knowledge:
             required_text.extend(reference.get(key) for key in ("source", "content"))
-        if not self.canine_knowledge or any(
+
+        if any(
             not isinstance(value, str) or not value.strip() for value in required_text
         ):
-            raise ValueError("Provide profile name/description and sourced knowledge.")
+            raise ValueError(
+                "Provide profile name/description and valid sourced knowledge."
+            )
         if not isinstance(self.situation, (str, type(None))) or not isinstance(
             self.target_hint, str
         ):

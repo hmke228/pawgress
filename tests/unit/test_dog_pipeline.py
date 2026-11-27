@@ -110,7 +110,12 @@ def test_first_report_preserves_content_and_sources(
     assert supplied["dog_profile"] == PROFILE
     assert supplied["situation"] == situation
     assert supplied["target_hint"] == "red collar"
-    assert "https://" in supplied["canine_knowledge"][0]["source"]
+
+    if situation == "unmatched query vocabulary":
+        assert supplied["canine_knowledge"] == []
+    else:
+        assert "https://" in supplied["canine_knowledge"][0]["source"]
+
     assert content[1]["image_url"].startswith("data:image/png;base64,")
     assert content[2]["image_url"].startswith("data:image/jpeg;base64,")
     assert result["behavioral_observations"] == {

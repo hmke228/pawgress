@@ -39,7 +39,8 @@ def handle(request):
     if body["text"]["format"]["name"] == "ai_response":
         content = body["input"][0]["content"]
         assert content[1]["type"] == "input_image"
-        assert json.loads(content[0]["text"])["canine_knowledge"]
+        knowledge = json.loads(content[0]["text"])["canine_knowledge"]
+        assert isinstance(knowledge, list)
         result = fields
     else:
         if fail == "yes":
