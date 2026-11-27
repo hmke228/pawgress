@@ -32,7 +32,7 @@ def test_extract_keywords():
     """Check that punctuation and common words are removed."""
     keywords = extract_keywords("My dog has a tucked tail!")
 
-    assert keywords == {"dog", "tucked", "tail"}
+    assert keywords == {"tucked", "tail"}
 
 
 def test_retrieve_ranked_context():

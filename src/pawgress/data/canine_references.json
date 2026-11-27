@@ -1,10 +1,45 @@
 
 [
-    {
-      "id": "ref_001",
-      "topic": "Canine body language and fear",
-      "text": "A dog holding its tail low or tucked between its legs may be showing fear or appeasement. Other body language and the situation should also be considered.",
-      "source_title": "Canine Communication - Interpreting Dog Language",
-      "source_url": "https://vcahospitals.com/know-your-pet/canine-communication"
-    }
-  ]
+  {
+    "id": "ref_001",
+    "topic": "Canine body language and fear",
+    "text": "A dog holding its tail low or tucked between its legs may be showing fear or appeasement. Other body language and the situation should also be considered.",
+    "source_title": "Canine Communication - Interpreting Dog Language",
+    "source_url": "https://vcahospitals.com/know-your-pet/canine-communication"
+  },
+  {
+    "id": "ref_002",
+    "topic": "Canine anxiety and stress signals",
+    "text": "Signs associated with fear or anxiety in dogs can include a lowered posture, repeated lip licking, yawning, and vocalization. These behaviors should be considered alongside the surrounding situation rather than treated as proof of anxiety.",
+    "source_title": "Behavior Problems of Dogs",
+    "source_url": "https://www.merckvetmanual.com/behavior/behavior-of-dogs/behavior-problems-of-dogs"
+  },
+  {
+    "id": "ref_003",
+    "topic": "Food guarding and warning behaviors",
+    "text": "A dog guarding food may stiffen, freeze, stare, growl, snap, or snarl when someone approaches its food bowl. These behaviors can indicate a potential safety concern, and owners should avoid confrontational interactions and seek qualified professional guidance.",
+    "source_title": "Food Guarding",
+    "source_url": "https://www.aspca.org/pet-care/dog-care/common-dog-behavior-issues/food-guarding"
+  },
+  {
+    "id": "ref_004",
+    "topic": "Mouthing and nipping during social interaction",
+    "text": "Mouthing and nipping can occur during interactions with people or other dogs. A relaxed face and posture may help distinguish playful behavior from more concerning interactions, but the force of biting and the surrounding context also matter.",
+    "source_title": "Mouthing, Nipping and Play Biting in Adult Dogs",
+    "source_url": "https://www.aspca.org/pet-care/dog-care/common-dog-behavior-issues/mouthing-nipping-and-play-biting-adult-dogs"
+  },
+  {
+    "id": "ref_005",
+    "topic": "Barking and environmental triggers",
+    "text": "Barking can occur during greetings, alarm responses, excitement, frustration, or attempts to gain attention. The circumstances and other observed behaviors are important when considering why a dog may be barking.",
+    "source_title": "Barking",
+    "source_url": "https://www.aspca.org/pet-care/dog-care/common-dog-behavior-issues/barking"
+  },
+  {
+    "id": "ref_006",
+    "topic": "Canine social communication",
+    "text": "Dogs communicate through posture, facial expressions, ear position, raised hackles, vocalizations, and other signals. Differences in physical appearance and individual behavior can affect how these signals are interpreted during social interactions.",
+    "source_title": "Normal Social Behavior in Dogs",
+    "source_url": "https://www.merckvetmanual.com/dog-owners/behavior-of-dogs/normal-social-behavior-in-dogs"
+  }
+]

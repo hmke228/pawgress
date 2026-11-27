@@ -1,0 +1,56 @@
+
+[
+    {
+      "name": "direct_tucked_tail",
+      "query": "My dog has a tucked tail.",
+      "expected_matches": 1,
+      "expected_source_url": "https://vcahospitals.com/know-your-pet/canine-communication",
+      "reason": "Direct match with the body language reference."
+    },
+    {
+      "name": "related_tail_description",
+      "query": "My dog's tail is between its legs.",
+      "expected_matches": 1,
+      "expected_source_url": "https://vcahospitals.com/know-your-pet/canine-communication",
+      "reason": "Related description of a tucked tail."
+    },
+    {
+      "name": "weak_nervous_description",
+      "query": "My dog seems nervous.",
+      "expected_matches": 0,
+      "reason": "No specific observable behavior provides a reliable match with the available references."
+    },
+    {
+      "name": "unrelated_medical_symptom",
+      "query": "My dog is vomiting.",
+      "expected_matches": 0,
+      "reason": "The reference does not address vomiting."
+    },
+    {
+      "name": "unsupported_play_behavior",
+      "query": "My dog is doing a play bow.",
+      "expected_matches": 0,
+      "reason": "The current reference collection does not specifically cover play bows."
+    },
+    {
+        "name": "food_guarding",
+        "query": "My dog growls when someone approaches its food bowl.",
+        "expected_matches": 1,
+        "expected_source_url": "https://www.aspca.org/pet-care/dog-care/common-dog-behavior-issues/food-guarding",
+        "reason": "Food guarding behavior should retrieve the relevant ASPCA reference."
+    },
+    {
+        "name": "barking_at_door",
+        "query": "My dog barks when someone comes to the door.",
+        "expected_matches": 1,
+        "expected_source_url": "https://www.aspca.org/pet-care/dog-care/common-dog-behavior-issues/barking",
+        "reason": "Barking behavior should retrieve the ASPCA barking reference."
+    },
+    {
+        "name": "stress_signals",
+        "query": "My dog keeps licking its lips and yawning.",
+        "expected_matches": 1,
+        "expected_source_url": "https://www.merckvetmanual.com/behavior/behavior-of-dogs/behavior-problems-of-dogs",
+        "reason": "Lip licking and yawning should retrieve the relevant Merck veterinary reference."
+    }
+]

@@ -15,7 +15,7 @@ class KnowledgeRetrievalError(ValueError):
 def retrieve_canine_knowledge(
     situation: str | None, reference_path: Path = REFERENCE_PATH
 ) -> list[dict[str, str]]:
-    """Use sourced references, including general context for image-only input."""
+    """Retrieve relevant sourced references without unrelated fallback."""
     try:
         references = load_knowledge_base(reference_path)
     except (OSError, ValueError) as error:
@@ -27,13 +27,18 @@ def retrieve_canine_knowledge(
         raise KnowledgeRetrievalError(
             "Populate the canine knowledge base before generating reports."
         )
-    matches = retrieve_context(situation or "", knowledge_base=references)
+
+    if situation and situation.strip():
+        matches = retrieve_context(situation, knowledge_base=references)
+    else:
+        matches = references
+
     return [
         {
             "source": f"{entry['source_title']} ({entry['source_url']})",
             "content": entry["text"],
         }
-        for entry in matches or references
+        for entry in matches
     ]
 
 
@@ -63,28 +68,46 @@ STOP_WORDS = {
     "be",
     "by",
     "can",
+    "dog",
     "for",
     "from",
     "has",
     "in",
     "is",
     "it",
+    "its",
+    "it's",
     "my",
     "of",
     "on",
     "or",
+    "s",
+    "someone",
     "the",
     "to",
     "was",
+    "when",
     "with",
 }
 
 
+NORMALIZED_TERMS = {
+    "barks": "bark",
+    "barking": "bark",
+    "barked": "bark",
+    "growls": "growl",
+    "growling": "growl",
+    "growled": "growl",
+}
+
+
 def extract_keywords(text: str) -> set[str]:
-    """Extract meaningful words for knowledge retrieval."""
+    """Extract and normalize meaningful words for knowledge retrieval."""
     words = re.findall(r"\b\w+\b", text.lower())
 
-    return {word for word in words if word not in STOP_WORDS}
+    return {
+        NORMALIZED_TERMS.get(word, word) for word in words if word not in STOP_WORDS
+    }
 
 
 def retrieve_context(
